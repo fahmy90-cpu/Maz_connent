@@ -22,6 +22,7 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            height: -webkit-fill-available;
             overflow: hidden;
             color: #111b21;
         }
@@ -30,21 +31,23 @@
         .screen {
             display: none;
             flex-direction: column;
-            height: 100vh;
+            height: 100%;
             width: 100%;
+            overflow: hidden;
         }
 
         .screen.active {
             display: flex;
         }
 
-        /* 1. SPLASH SCREEN (Mvuto wa Kuanza) */
+        /* 1. SPLASH SCREEN */
         #splash-screen {
             background-color: #0f4c4a;
             color: white;
             justify-content: center;
             align-items: center;
             gap: 20px;
+            height: 100vh;
         }
 
         .splash-logo {
@@ -68,11 +71,12 @@
             100% { transform: scale(1); }
         }
 
-        /* 2. AUTH SCREEN (Usajili wa Ukweli) */
+        /* 2. AUTH SCREEN */
         #auth-screen {
             background-color: #f0f3f1;
             justify-content: center;
             padding: 24px;
+            height: 100vh;
         }
 
         .auth-container {
@@ -117,6 +121,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .header-icon-btn {
@@ -133,6 +138,7 @@
             padding: 10px 15px;
             background: white;
             border-bottom: 1px solid #f0f2f5;
+            flex-shrink: 0;
         }
 
         .search-box {
@@ -152,7 +158,7 @@
             margin-left: 8px;
         }
 
-        /* LIST OF USERS (ORODHA HALISI) */
+        /* LIST OF USERS */
         .chats-scroll-area {
             flex: 1;
             overflow-y: auto;
@@ -228,6 +234,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            flex-shrink: 0;
         }
 
         .back-btn {
@@ -251,7 +258,7 @@
             gap: 8px;
         }
 
-        /* CHAT BUBBLE DESIGNS (4 TYPES) */
+        /* CHAT BUBBLE DESIGNS */
         .bubble {
             max-width: 75%;
             padding: 8px 12px;
@@ -262,19 +269,15 @@
             -webkit-user-select: none;
         }
 
-        /* Type 1: Classic (Default) */
         .bubble.type-classic.in { background: white; align-self: flex-start; border-radius: 12px; border-top-left-radius: 2px; }
         .bubble.type-classic.out { background: #d9fdd3; align-self: flex-end; border-radius: 12px; border-top-right-radius: 2px; }
 
-        /* Type 2: Fully Rounded Pill */
         .bubble.type-rounded.in { background: white; align-self: flex-start; border-radius: 20px; }
         .bubble.type-rounded.out { background: #d9fdd3; align-self: flex-end; border-radius: 20px; }
 
-        /* Type 3: Sharp Square Borders */
         .bubble.type-sharp.in { background: white; align-self: flex-start; border-radius: 4px; border-left: 3px solid #0f4c4a; }
         .bubble.type-sharp.out { background: #d9fdd3; align-self: flex-end; border-radius: 4px; border-right: 3px solid #0f4c4a; }
 
-        /* Type 4: Slanted Minimalist */
         .bubble.type-slanted.in { background: #ffffff; align-self: flex-start; border-radius: 15px 15px 15px 0px; box-shadow: 2px 2px 5px rgba(0,0,0,0.05); }
         .bubble.type-slanted.out { background: #bdf7b7; align-self: flex-end; border-radius: 15px 15px 0px 15px; box-shadow: -2px 2px 5px rgba(0,0,0,0.05); }
 
@@ -292,6 +295,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-shrink: 0;
         }
 
         .chat-input-area input {
@@ -321,7 +325,7 @@
         .settings-container {
             padding: 15px;
             background-color: #f4f6f6;
-            height: calc(100vh - 60px);
+            flex: 1;
             overflow-y: auto;
         }
 
@@ -447,6 +451,7 @@
             display: flex;
             justify-content: space-around;
             border-top: 1px solid #f0f2f5;
+            flex-shrink: 0;
         }
 
         .nav-item {
@@ -471,6 +476,18 @@
 
         .nav-item.active svg {
             fill: #0f4c4a;
+        }
+
+        /* NOT FOUND CONTAINER */
+        .not-found-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            gap: 12px;
+            color: #667781;
+            font-size: 15px;
         }
     </style>
 </head>
@@ -635,9 +652,6 @@
     </div>
 
     <script>
-        // ==========================================
-        // CONFIGURATION YA FIREBASE
-        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyA1...",
             authDomain: "maz-connent.firebaseapp.com",
@@ -658,12 +672,10 @@
         let holdTimer;
         const HOLD_DURATION = 1000;
 
-        // Vigezo vya Customization (Vinahifadhiwa kwenye LocalStorage)
         let mtindoWaMesejiSasa = localStorage.getItem("maz_bubble_type") || "classic";
         let wallpaperSasa = localStorage.getItem("maz_wallpaper") || "#efeae2";
 
         window.addEventListener('DOMContentLoaded', () => {
-            // Weka mitindo iliyohifadhiwa mapema
             document.getElementById("chat-messages-box").style.background = wallpaperSasa;
             if (wallpaperSasa.includes("url")) {
                 document.getElementById("chat-messages-box").style.backgroundSize = "cover";
@@ -691,7 +703,6 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
             
-            // Weka active tab icon kubadilika rangi
             document.querySelectorAll('.bottom-nav').forEach(nav => {
                 const items = nav.querySelectorAll('.nav-item');
                 items.forEach(item => {
@@ -708,13 +719,11 @@
             document.getElementById("user-settings-name").innerText = mtumiajiSasa.username;
             document.getElementById("user-settings-pic").src = mtumiajiSasa.avatar;
             
-            // Weka active class kwenye viungo vya customization vilivyochaguliwa awali
             document.querySelectorAll('.bubble-design-btn').forEach(b => b.classList.remove('active'));
             const activeBtn = document.getElementById(`btn-${mtindoWaMesejiSasa}`);
             if(activeBtn) activeBtn.classList.add('active');
         }
 
-        // Functions za Customization
         function badilishaWallpaper(styleValue, thumbId) {
             wallpaperSasa = styleValue;
             localStorage.setItem("maz_wallpaper", styleValue);
@@ -734,20 +743,14 @@
             document.querySelectorAll('.bubble-design-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`btn-${typeName}`).classList.add('active');
             
-            // Kama kuna meseji zipo screen, zibadilike chap chap
             document.querySelectorAll('.bubble').forEach(b => {
                 b.className = b.classList.contains('out') ? `bubble type-${typeName} out` : `bubble type-${typeName} in`;
             });
         }
 
-        // ==========================================
-        // 1. USAJILI MWENYE MLINZI WA EMAIL (ILIYOREKEBISHWA)
-        // ==========================================
         function mchakatoWaUsajili() {
             const jina = document.getElementById("reg-name").value.trim();
             const email = document.getElementById("reg-email").value.trim().toLowerCase();
-
-            // Ukaguzi safi wa email unaoruhusu herufi ndogo na kubwa vizuri
             const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
             if (!jina || !email) {
@@ -756,11 +759,10 @@
             }
 
             if (!emailPattern.test(email)) {
-                alert("Barua pepe (Email) sio sahihi! Weka email ya ukweli (Mfano: jina@gmail.com) ❌");
+                alert("Barua pepe (Email) sio sahihi!");
                 return;
             }
 
-            // Kubadilisha alama maalum kuwa herufi salama kwa Firebase Node Keys
             const userId = email.replace(/@/g, "_at_").replace(/\./g, "_dot_");
             
             mtumiajiSasa = {
@@ -783,9 +785,7 @@
             });
         }
 
-        // ==========================================
-        // 2. SEARCH BAR LOGIC (LIVE SEARCH)
-        // ==========================================
+        // SEARCH BAR LOGIC
         document.getElementById("search-input-field").addEventListener("input", (e) => {
             const txt = e.target.value.trim();
             const listEneo = document.getElementById("chats-list-container");
@@ -798,14 +798,36 @@
             db.ref("users").orderByChild("username").startAt(txt).endAt(txt + "\uf8ff").once("value", (snap) => {
                 listEneo.innerHTML = "";
                 if (!snap.exists()) {
-                    listEneo.innerHTML = `<div style="padding:20px; text-align:center; color:#ea0038;">Mtumiaji huyu hayupo! ❌</div>`;
+                    listEneo.innerHTML = `
+                        <div class="not-found-wrapper">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#667781" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <span>Mtumiaji huyu hayupo kwa sasa</span>
+                        </div>`;
                     return;
                 }
+                let matokeoYapo = false;
                 snap.forEach((child) => {
                     const usr = child.val();
                     if (usr.id === mtumiajiSasa.id) return;
+                    matokeoYapo = true;
                     vutaIdadiYaMesejiNaKuonyeshaRow(usr, listEneo);
                 });
+
+                if (!matokeoYapo) {
+                    listEneo.innerHTML = `
+                        <div class="not-found-wrapper">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#667781" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <span>Mtumiaji huyu hayupo kwa sasa</span>
+                        </div>`;
+                }
             });
         });
 
@@ -848,9 +870,6 @@
             });
         }
 
-        // ==========================================
-        // 3. MFUMO WA LIVE TICKS NA KUTUMA MESSAGES
-        // ==========================================
         function mchakatoWaKutumaUjumbe() {
             const input = document.getElementById("message-text-input");
             const maandishi = input.value.trim();
@@ -897,7 +916,6 @@
                     const tStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
                     const bubble = document.createElement("div");
-                    // Inatumia mtindo ulioteuliwa sasa hivi
                     bubble.className = msg.senderId === mtumiajiSasa.id ? `bubble type-${mtindoWaMesejiSasa} out` : `bubble type-${mtindoWaMesejiSasa} in`;
                     bubble.innerHTML = `
                         <p>${msg.text}</p>
@@ -911,9 +929,6 @@
             });
         }
 
-        // ==========================================
-        // 4. HOLD TO DELETE FOR SENDER PRIVACY
-        // ==========================================
         function wekaMfumoWaKufutaMeseji(element, messageId, senderId, chatId) {
             element.addEventListener('touchstart', (e) => {
                 holdTimer = setTimeout(() => { anzishaMchakatoWaKufuta(messageId, senderId, chatId); }, HOLD_DURATION);
@@ -936,9 +951,6 @@
             }
         }
 
-        // ==========================================
-        // INTERFACE ACTIONS & ONLINE ENGINE
-        // ==========================================
         function funguaSogaKamilifu(mlengwaId, jina, avatar) {
             chatYenyeActiveID = tengenezaChatId(mtumiajiSasa.id, mlengwaId);
             db.ref(`users/${mtumiajiSasa.id}/activeChat`).set(chatYenyeActiveID);
