@@ -37,7 +37,6 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        /* FIXED MOBILE KEYBOARD FLOW */
         html {
             height: 100%;
         }
@@ -53,7 +52,6 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* SCREEN MANAGEMENT */
         .screen {
             display: none;
             flex-direction: column;
@@ -67,7 +65,6 @@
             display: flex;
         }
 
-        /* 1. SPLASH SCREEN */
         #splash-screen {
             background-color: #0f4c4a;
             color: white;
@@ -98,7 +95,6 @@
             100% { transform: scale(1); }
         }
 
-        /* 2. AUTH SCREEN */
         #auth-screen {
             background-color: #f0f3f1;
             justify-content: center;
@@ -140,7 +136,6 @@
             cursor: pointer;
         }
 
-        /* MAIN BAR & HEADER */
         .app-header {
             background: #0f4c4a;
             color: white;
@@ -160,7 +155,6 @@
             justify-content: center;
         }
 
-        /* SEARCH BAR */
         .search-wrapper {
             padding: 10px 15px;
             background: var(--card-bg);
@@ -188,7 +182,6 @@
             color: var(--text-color);
         }
 
-        /* NEW SVG SEARCH SPINNER CSS */
         .search-spinner {
             display: none;
             width: 20px;
@@ -225,7 +218,6 @@
             100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
         }
 
-        /* LIST OF USERS */
         .chats-scroll-area {
             flex: 1;
             overflow-y: auto;
@@ -294,7 +286,6 @@
             margin-left: 10px;
         }
 
-        /* CHAT WINDOW INTERFACE */
         .chat-header {
             background: #0f4c4a;
             color: white;
@@ -326,7 +317,6 @@
             gap: 8px;
         }
 
-        /* CHAT BUBBLE DESIGNS */
         .bubble {
             max-width: 75%;
             padding: 8px 12px;
@@ -390,7 +380,6 @@
             cursor: pointer;
         }
 
-        /* MUUNDO WA SETTINGS */
         .settings-container {
             padding: 15px;
             background-color: var(--bg-color);
@@ -499,7 +488,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-        }
+            }
 
         .settings-icon svg {
             fill: var(--text-muted);
@@ -521,7 +510,6 @@
             margin-top: 2px;
         }
 
-        /* DESIGN CHOOSER STYLES */
         .customizer-box {
             display: flex;
             gap: 10px;
@@ -562,7 +550,6 @@
             border-color: #0f4c4a;
         }
 
-        /* THEME SELECTION BOX */
         .theme-box-container {
             display: flex;
             gap: 10px;
@@ -596,7 +583,6 @@
             fill: var(--text-color);
         }
 
-        /* BOTTOM TAB NAVIGATION BAR */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -611,7 +597,6 @@
             z-index: 1000;
         }
 
-        /* KEYBOARD DETECTION AUTO-HIDE */
         @media (max-height: 540px) {
             .bottom-nav {
                 display: none !important;
@@ -648,7 +633,6 @@
             fill: #0f4c4a;
         }
 
-        /* NOT FOUND CONTAINER */
         .not-found-wrapper {
             display: flex;
             flex-direction: column;
@@ -660,7 +644,6 @@
             font-size: 15px;
         }
 
-        /* TYPING EFFECT ANIMATION STYLE */
         .typing-text-active {
             color: #00bfa5 !important;
             font-weight: bold;
@@ -888,31 +871,37 @@
         let rangiMfumoSasa = localStorage.getItem("maz_theme") || "light";
 
         window.addEventListener('DOMContentLoaded', () => {
-            document.getElementById("chat-messages-box").style.background = wallpaperSasa;
-            if (wallpaperSasa.includes("url")) {
-                document.getElementById("chat-messages-box").style.backgroundSize = "cover";
-                document.getElementById("chat-messages-box").style.backgroundPosition = "center";
+            // ULINZI: Hakikisha wallpaperSasa ni string halali kabla ya kutumia .includes
+            const messagesBox = document.getElementById("chat-messages-box");
+            if (messagesBox) {
+                messagesBox.style.background = wallpaperSasa;
+                if (wallpaperSasa && typeof wallpaperSasa === "string" && wallpaperSasa.includes("url")) {
+                    messagesBox.style.backgroundSize = "cover";
+                    messagesBox.style.backgroundPosition = "center";
+                }
             }
 
             badilishaRangiMfumo(rangiMfumoSasa);
 
+            // ULINZI MKUU WA SPLASH SCREEN: Kuzuia kukwama kwa namna yoyote
             setTimeout(() => {
-                const zilizohifadhiwa = localStorage.getItem("maz_user");
-                if (zilizohifadhiwa) {
-                    try {
+                try {
+                    const zilizohifadhiwa = localStorage.getItem("maz_user");
+                    if (zilizohifadhiwa) {
                         mtumiajiSasa = JSON.parse(zilizohifadhiwa);
-                    } catch(e) {
-                        mtumiajiSasa = null;
-                    }
-                    if (mtumiajiSasa && mtumiajiSasa.id) {
-                        washaMfumoWaOnlineStatus(mtumiajiSasa.id);
-                        pakiaTaarifaZaSettings();
-                        badiliScreen('home-screen');
+                        if (mtumiajiSasa && mtumiajiSasa.id) {
+                            washaMfumoWaOnlineStatus(mtumiajiSasa.id);
+                            pakiaTaarifaZaSettings();
+                            badiliScreen('home-screen');
+                        } else {
+                            badiliScreen('auth-screen');
+                        }
                     } else {
                         badiliScreen('auth-screen');
                     }
-                } else {
-                    badiliScreen('auth-screen');
+                } catch (e) {
+                    console.error("Kosa kwenye ku-load user data:", e);
+                    badiliScreen('auth-screen'); // Ikitokea hitilafu isi-stuck, iende auth-screen
                 }
             }, 2500);
 
@@ -972,7 +961,8 @@
             if(lightBtn && darkBtn) {
                 lightBtn.classList.remove('active');
                 darkBtn.classList.remove('active');
-                document.getElementById(`theme-${themeName}-btn`).classList.add('active');
+                const targetBtn = document.getElementById(`theme-${themeName}-btn`);
+                if (targetBtn) targetBtn.classList.add('active');
             }
         }
 
@@ -1070,5 +1060,249 @@
             });
         }
 
-        // SEARCH BAR LOGIC WITH INTEGRATED SVG SPINNER EFFECT
-        document.getElementById("search-input-field
+        document.getElementById("search-input-field").addEventListener("input", (e) => {
+            const txt = e.target.value.trim();
+            const listEneo = document.getElementById("chats-list-container");
+            const spinnerElement = document.getElementById("search-loading-spinner");
+
+            if (!txt) {
+                listEneo.innerHTML = `<div style="padding:40px 20px; text-align:center; color:#667781; font-size:14px;">Type the name of the contact you wish to reach in the search bar above...</div>`;
+                if(spinnerElement) spinnerElement.style.display = "none";
+                return;
+            }
+
+            if(spinnerElement) spinnerElement.style.display = "block";
+
+            db.ref("users").orderByChild("username").startAt(txt).endAt(txt + "\uf8ff").once("value", (snap) => {
+                listEneo.innerHTML = "";
+                
+                if(spinnerElement) spinnerElement.style.display = "none";
+
+                if (!snap.exists()) {
+                    listEneo.innerHTML = `
+                        <div class="not-found-wrapper">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#667781" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <span>User not found on the platform</span>
+                        </div>`;
+                    return;
+                }
+                let matokeoYapo = false;
+                snap.forEach((child) => {
+                    const usr = child.val();
+                    if (mtumiajiSasa && usr.id === mtumiajiSasa.id) return;
+                    matokeoYapo = true;
+                    vutaIdadiYaMesejiNaKuonyeshaRow(usr, listEneo);
+                });
+
+                if (!matokeoYapo) {
+                    listEneo.innerHTML = `
+                        <div class="not-found-wrapper">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#667781" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <span>User not found on the platform</span>
+                        </div>`;
+                }
+            });
+        });
+
+        function vutaIdadiYaMesejiNaKuonyeshaRow(mtumiaji, eneo) {
+            if(!mtumiajiSasa) return;
+            const chatId = tengenezaChatId(mtumiajiSasa.id, mtumiaji.id);
+            
+            db.ref(`unread_counts/${mtumiajiSasa.id}/${chatId}`).on("value", (snapshot) => {
+                const unreadCount = snapshot.val() || 0;
+                
+                db.ref(`chats/${chatId}/messages`).limitToLast(1).once("value", (msgSnap) => {
+                    let mudaWamwisho = "";
+                    if (msgSnap.exists()) {
+                        msgSnap.forEach(m => {
+                            const d = new Date(m.val().timestamp);
+                            mudaWamwisho = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        });
+                    }
+
+                    const rowHTML = `
+                        <div class="user-chat-row" onclick="funguaSogaKamilifu('${mtumiaji.id}', '${mtumiaji.username}', '${mtumiaji.avatar}')">
+                            <img src="${mtumiaji.avatar}" class="row-avatar">
+                            <div class="row-body">
+                                <div class="row-top">
+                                    <h4>${mtumiaji.username}</h4>
+                                    <span class="chat-time">${mudaWamwisho}</span>
+                                </div>
+                                <p class="row-status">${mtumiaji.status || 'Available'}</p>
+                            </div>
+                            ${unreadCount > 0 ? `<div class="unread-badge-circle">${unreadCount}</div>` : ""}
+                        </div>
+                    `;
+                    
+                    const mzeeUpo = document.getElementById(`row-${mtumiaji.id}`);
+                    if (mzeeUpo) {
+                        mzeeUpo.outerHTML = rowHTML;
+                    } else {
+                        eneo.innerHTML += `<div id="row-${mtumiaji.id}">${rowHTML}</div>`;
+                    }
+                });
+            });
+        }
+
+        function mchakatoWaKutumaUjumbe() {
+            const input = document.getElementById("message-text-input");
+            const maandishi = input.value.trim();
+            if (!maandishi || !chatYenyeActiveID || !mtumiajiSasa) return;
+
+            geuzaTypingStatus(false);
+
+            const messageId = db.ref(`chats/${chatYenyeActiveID}/messages`).push().key;
+            const mlengwaId = chatYenyeActiveID.replace(mtumiajiSasa.id, "").replace("_", "");
+
+            const ujumbeData = {
+                id: messageId,
+                senderId: mtumiajiSasa.id,
+                text: maandishi,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                status: "sent"
+            };
+
+            db.ref(`chats/${chatYenyeActiveID}/messages/${messageId}`).set(ujumbeData);
+            input.value = "";
+
+            db.ref(`users/${mlengwaId}/activeChat`).once("value", (snap) => {
+                if (snap.val() !== chatYenyeActiveID) {
+                    db.ref(`unread_counts/${mlengwaId}/${chatYenyeActiveID}`).transaction((c) => (c || 0) + 1);
+                }
+            });
+        }
+
+        function sikilizaMesejiZoteZisomekeLive(chatId) {
+            if(!mtumiajiSasa) return;
+            db.ref(`chats/${chatId}/messages`).on("value", (snapshot) => {
+                const chatBox = document.getElementById("chat-messages-box");
+                chatBox.innerHTML = "";
+
+                snapshot.forEach((childSnap) => {
+                    const msg = childSnap.val();
+                    
+                    if (msg.senderId !== mtumiajiSasa.id && msg.status !== "read") {
+                        db.ref(`chats/${chatId}/messages/${msg.id}/status`).set("read");
+                    }
+
+                    let tickIcon = "✓"; 
+                    if (msg.status === "delivered") tickIcon = "✓✓";
+                    if (msg.status === "read") tickIcon = `<span style="color: #00a3ff;">✓✓</span>`;
+
+                    const d = new Date(msg.timestamp);
+                    const tStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+                    const bubble = document.createElement("div");
+                    bubble.className = msg.senderId === mtumiajiSasa.id ? `bubble type-${mtindoWaMesejiSasa} out` : `bubble type-${mtindoWaMesejiSasa} in`;
+                    bubble.innerHTML = `
+                        <p>${msg.text}</p>
+                        <span class="bubble-meta" style="font-size:10px;">${tStr} &nbsp; ${msg.senderId === mtumiajiSasa.id ? tickIcon : ""}</span>
+                    `;
+
+                    wekaMfumoWaKufutaMeseji(bubble, msg.id, msg.senderId, chatId);
+                    chatBox.appendChild(bubble);
+                });
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+        }
+
+        function wekaMfumoWaKufutaMeseji(element, messageId, senderId, chatId) {
+            element.addEventListener('touchstart', (e) => {
+                holdTimer = setTimeout(() => { anzishaMchakatoWaKufuta(messageId, senderId, chatId); }, HOLD_DURATION);
+            });
+            element.addEventListener('touchend', () => { clearTimeout(holdTimer); });
+            
+            element.addEventListener('mousedown', () => {
+                holdTimer = setTimeout(() => { anzishaMchakatoWaKufuta(messageId, senderId, chatId); }, HOLD_DURATION);
+            });
+            element.addEventListener('mouseup', () => { clearTimeout(holdTimer); });
+        }
+
+        function anzishaMchakatoWaKufuta(messageId, senderId, chatId) {
+            if (!mtumiajiSasa || senderId !== mtumiajiSasa.id) {
+                alert("Privacy violation: You cannot delete someone else's transmission! 🔒");
+                return;
+            }
+            if (confirm("Do you want to revoke and delete this transmission for everyone?")) {
+                db.ref(`chats/${chatId}/messages/${messageId}`).remove();
+            }
+        }
+
+        function funguaSogaKamilifu(mlengwaId, jina, avatar) {
+            if(!mtumiajiSasa) return;
+            chatYenyeActiveID = tengenezaChatId(mtumiajiSasa.id, mlengwaId);
+            db.ref(`users/${mtumiajiSasa.id}/activeChat`).set(chatYenyeActiveID);
+            db.ref(`unread_counts/${mtumiajiSasa.id}/${chatYenyeActiveID}`).set(0);
+            
+            document.getElementById("chat-screen-title").innerText = jina;
+            document.getElementById("chat-window-avatar").src = avatar;
+            
+            db.ref(`users/${mlengwaId}/isOnline`).on("value", (onlineSnap) => {
+                const st = document.getElementById("chat-screen-online-status");
+                
+                db.ref(`chats/${chatYenyeActiveID}/typing/${mlengwaId}`).on("value", (typingSnap) => {
+                    const isTyping = typingSnap.val();
+                    
+                    if (isTyping === true) {
+                        st.innerText = "typing...";
+                        st.className = "typing-text-active";
+                        st.style.display = "block";
+                    } else if (onlineSnap.val() === true) {
+                        st.innerText = "online";
+                        st.className = "";
+                        st.style.display = "block";
+                    } else {
+                        st.style.display = "none";
+                    }
+                });
+            });
+
+            sikilizaMesejiZoteZisomekeLive(chatYenyeActiveID);
+            badiliScreen('chat-window-screen');
+        }
+
+        function rudiHome() {
+            if (chatYenyeActiveID && mtumiajiSasa) {
+                geuzaTypingStatus(false);
+                const mlengwaId = chatYenyeActiveID.replace(mtumiajiSasa.id, "").replace("_", "");
+                db.ref(`chats/${chatYenyeActiveID}/typing/${mlengwaId}`).off();
+                
+                db.ref(`users/${mtumiajiSasa.id}/activeChat`).remove();
+                db.ref(`chats/${chatYenyeActiveID}/messages`).off();
+            }
+            badiliScreen('home-screen');
+        }
+
+        function washaMfumoWaOnlineStatus(userId) {
+            const amOnlineRef = db.ref(".info/connected");
+            const userStatusRef = db.ref(`users/${userId}/isOnline`);
+            amOnlineRef.on("value", (snapshot) => {
+                if (snapshot.val() == false) return;
+                userStatusRef.onDisconnect().set(false);
+                userStatusRef.set(true);
+            });
+        }
+
+        function tengenezaChatId(id1, id2) {
+            return id1 < id2 ? `${id1}_${id2}` : `${id2}_${id1}`;
+        }
+
+        function ondokaKwenyeMfumo() {
+            if (mtumiajiSasa) {
+                geuzaTypingStatus(false);
+                db.ref(`users/${mtumiajiSasa.id}/isOnline`).set(false);
+            }
+            localStorage.clear();
+            location.reload();
+        }
+    </script>
+</body>
+</html>
