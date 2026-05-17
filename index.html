@@ -741,15 +741,16 @@
         }
 
         // ==========================================
-        // 1. USAJILI MWENYE MLINZI WA EMAIL (VALIDATION)
+        // 1. USAJILI MWENYE MLINZI WA EMAIL (ILIYOREKEBISHWA)
         // ==========================================
         function mchakatoWaUsajili() {
-            const jina = document.getElementById("reg-name").value;
-            const email = document.getElementById("reg-email").value;
+            const jina = document.getElementById("reg-name").value.trim();
+            const email = document.getElementById("reg-email").value.trim().toLowerCase();
 
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            // Ukaguzi safi wa email unaoruhusu herufi ndogo na kubwa vizuri
+            const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-            if (!jina.trim() || !email.trim()) {
+            if (!jina || !email) {
                 alert("Tafadhali jaza maelezo yote kikamilifu!");
                 return;
             }
@@ -759,7 +760,8 @@
                 return;
             }
 
-            const userId = email.replace(/[^a-zA-Z0-9]/g, "_");
+            // Kubadilisha alama maalum kuwa herufi salama kwa Firebase Node Keys
+            const userId = email.replace(/@/g, "_at_").replace(/\./g, "_dot_");
             
             mtumiajiSasa = {
                 id: userId,
@@ -776,6 +778,8 @@
                 washaMfumoWaOnlineStatus(userId);
                 pakiaTaarifaZaSettings();
                 badiliScreen('home-screen');
+            }).catch((error) => {
+                alert("Kuna tatizo la mtandao: " + error.message);
             });
         }
 
