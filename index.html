@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Maz Connect</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -37,11 +37,17 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
+        /* FIXED MOBILE KEYBOARD FLOW */
+        html {
+            height: 100%;
+        }
+
         body {
             background-color: var(--bg-color);
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            height: 100%;
+            min-height: 100%;
             overflow: hidden;
             color: var(--text-color);
             transition: background-color 0.3s, color 0.3s;
@@ -54,6 +60,7 @@
             height: 100%;
             width: 100%;
             overflow: hidden;
+            flex: 1;
         }
 
         .screen.active {
@@ -167,6 +174,7 @@
             padding: 8px 12px;
             border-radius: 8px;
             align-items: center;
+            position: relative;
         }
 
         .search-box input {
@@ -176,7 +184,45 @@
             width: 100%;
             font-size: 15px;
             margin-left: 8px;
+            padding-right: 30px;
             color: var(--text-color);
+        }
+
+        /* NEW SVG SEARCH SPINNER CSS */
+        .search-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .spinner {
+            animation: rotate 2s linear infinite;
+            width: 100%;
+            height: 100%;
+        }
+
+        .spinner .path {
+            stroke: #0f4c4a;
+            stroke-linecap: round;
+            animation: dash 1.5s ease-in-out infinite;
+        }
+
+        [data-theme="dark"] .spinner .path {
+            stroke: #00bfa5;
+        }
+
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes dash {
+            0% { stroke-dasharray: 1, 150; stroke-dashoffset: 0; }
+            50% { stroke-dasharray: 90, 150; stroke-dashoffset: -35; }
+            100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
         }
 
         /* LIST OF USERS */
@@ -184,7 +230,7 @@
             flex: 1;
             overflow-y: auto;
             background: var(--card-bg);
-            padding-bottom: 70px; /* Nafasi ya kuzuia nav bar isifunike chat ya mwisho */
+            padding-bottom: 70px;
         }
 
         .user-chat-row {
@@ -350,7 +396,7 @@
             background-color: var(--bg-color);
             flex: 1;
             overflow-y: auto;
-            padding-bottom: 70px; /* Inazuia bottom bar isifunike vifungo vya chini */
+            padding-bottom: 70px;
         }
 
         .settings-header-profile {
@@ -461,7 +507,7 @@
 
         .settings-text {
             flex: 1;
-                }
+        }
 
         .settings-title {
             font-size: 16px;
@@ -550,7 +596,7 @@
             fill: var(--text-color);
         }
 
-        /* BOTTOM TAB NAVIGATION BAR - FIXED DOWN ALWAYS */
+        /* BOTTOM TAB NAVIGATION BAR */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -565,8 +611,8 @@
             z-index: 1000;
         }
 
-        /* INTELIGENT KEYBOARD DETECTION FIXED: Unaficha nav bar kioo kikiwa kifupi sana (Kama wakati keyboard imefunguka kwenye simu) */
-        @media (max-height: 500px) {
+        /* KEYBOARD DETECTION AUTO-HIDE */
+        @media (max-height: 540px) {
             .bottom-nav {
                 display: none !important;
             }
@@ -656,6 +702,11 @@
             <div class="search-box">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#667781" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 <input type="text" id="search-input-field" placeholder="Search for user by real name...">
+                <div id="search-loading-spinner" class="search-spinner">
+                    <svg class="spinner" viewBox="0 0 50 50">
+                        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                    </svg>
+                </div>
             </div>
         </div>
 
@@ -671,7 +722,7 @@
                 <span>Chats</span>
             </div>
             <div class="nav-item" onclick="badiliScreen('settings-screen')">
-                <svg width="22" height="22" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73-1.69-.98l.38-2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
                 <span>Settings</span>
             </div>
         </div>
@@ -804,7 +855,7 @@
                 <span>Chats</span>
             </div>
             <div class="nav-item active" onclick="badiliScreen('settings-screen')">
-                <svg width="22" height="22" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73(1.69-.98l.38-2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>
                 <span>Settings</span>
             </div>
         </div>
@@ -843,13 +894,16 @@
                 document.getElementById("chat-messages-box").style.backgroundPosition = "center";
             }
 
-            // Weka theme ya mfumo
             badilishaRangiMfumo(rangiMfumoSasa);
 
             setTimeout(() => {
                 const zilizohifadhiwa = localStorage.getItem("maz_user");
                 if (zilizohifadhiwa) {
-                    mtumiajiSasa = JSON.stringify(zilizohifadhiwa) ? JSON.parse(zilizohifadhiwa) : null;
+                    try {
+                        mtumiajiSasa = JSON.parse(zilizohifadhiwa);
+                    } catch(e) {
+                        mtumiajiSasa = null;
+                    }
                     if (mtumiajiSasa && mtumiajiSasa.id) {
                         washaMfumoWaOnlineStatus(mtumiajiSasa.id);
                         pakiaTaarifaZaSettings();
@@ -862,7 +916,6 @@
                 }
             }, 2500);
 
-            // LIVE LISTENER YA KUTUMA STATUS YA TYPING
             const msgInputField = document.getElementById("message-text-input");
             if(msgInputField) {
                 msgInputField.addEventListener("input", () => {
@@ -871,7 +924,6 @@
             }
         });
 
-        // Kazi ya kusasisha database ikiwa unaandika au la
         function geuzaTypingStatus(isTyping) {
             if (!chatYenyeActiveID || !mtumiajiSasa) return;
             db.ref(`chats/${chatYenyeActiveID}/typing/${mtumiajiSasa.id}`).set(isTyping);
@@ -880,7 +932,7 @@
                 clearTimeout(typingTimeout);
                 typingTimeout = setTimeout(() => {
                     geuzaTypingStatus(false);
-                }, 2000); // Itazima baada ya sekunde 2 usipoandika herufi mpya
+                }, 2000);
             }
         }
 
@@ -892,7 +944,7 @@
                 const items = nav.querySelectorAll('.nav-item');
                 items.forEach(item => {
                     item.classList.remove('active');
-                    if(item.getAttribute('onclick').includes(screenId)) {
+                    if(item.getAttribute('onclick') && item.getAttribute('onclick').includes(screenId)) {
                         item.classList.add('active');
                     }
                 });
@@ -910,7 +962,6 @@
             if(activeBtn) activeBtn.classList.add('active');
         }
 
-        // KUBADILI THEME YA APPLIKESHONI (LIGHT / DARK) PAPO HAPO
         function badilishaRangiMfumo(themeName) {
             rangiMfumoSasa = themeName;
             document.documentElement.setAttribute('data-theme', themeName);
@@ -925,7 +976,6 @@
             }
         }
 
-        // KUPAKIA PICHA MPYA YA PROFILE
         function handlePichaYaProfile(event) {
             const file = event.target.files[0];
             if (!file || !mtumiajiSasa) return;
@@ -935,17 +985,14 @@
                 const base64Image = reader.result;
                 document.getElementById("user-settings-pic").src = base64Image;
                 
-                // Sasisha local storage
                 mtumiajiSasa.avatar = base64Image;
                 localStorage.setItem("maz_user", JSON.stringify(mtumiajiSasa));
 
-                // Sasisha Firebase
                 db.ref(`users/${mtumiajiSasa.id}/avatar`).set(base64Image);
             }
             reader.readAsDataURL(file);
         }
 
-        // KULINDA NA KUSAVE NICKNAME PAMOJA NA BIO KWENYE FIREBASE / LOCALSTORAGE
         function lindaMabadilikoYaMtumiaji() {
             if (!mtumiajiSasa) return;
 
@@ -958,7 +1005,6 @@
             mtumiajiSasa.status = bioMpya;
             localStorage.setItem("maz_user", JSON.stringify(mtumiajiSasa));
 
-            // Push kwenda Firebase database cloud architecture
             db.ref(`users/${mtumiajiSasa.id}/username`).set(jinaJipya);
             db.ref(`users/${mtumiajiSasa.id}/status`).set(bioMpya);
         }
@@ -1024,244 +1070,5 @@
             });
         }
 
-        // SEARCH BAR LOGIC
-        document.getElementById("search-input-field").addEventListener("input", (e) => {
-            const txt = e.target.value.trim();
-            const listEneo = document.getElementById("chats-list-container");
-
-            if (!txt) {
-                listEneo.innerHTML = `<div style="padding:40px 20px; text-align:center; color:#667781; font-size:14px;">Type the name of the contact you wish to reach in the search bar above...</div>`;
-                return;
-            }
-
-            db.ref("users").orderByChild("username").startAt(txt).endAt(txt + "\uf8ff").once("value", (snap) => {
-                listEneo.innerHTML = "";
-                if (!snap.exists()) {
-                    listEneo.innerHTML = `
-                        <div class="not-found-wrapper">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#667781" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="8" x2="12" y2="12"></line>
-                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                            </svg>
-                            <span>User not found on the platform</span>
-                        </div>`;
-                    return;
-                }
-                let matokeoYapo = false;
-                snap.forEach((child) => {
-                    const usr = child.val();
-                    if (usr.id === mtumiajiSasa.id) return;
-                    matokeoYapo = true;
-                    vutaIdadiYaMesejiNaKuonyeshaRow(usr, listEneo);
-                });
-
-                if (!matokeoYapo) {
-                    listEneo.innerHTML = `
-                        <div class="not-found-wrapper">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#667781" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="8" x2="12" y2="12"></line>
-                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                            </svg>
-                            <span>User not found on the platform</span>
-                        </div>`;
-                }
-            });
-        });
-
-        function vutaIdadiYaMesejiNaKuonyeshaRow(mtumiaji, eneo) {
-            const chatId = tengenezaChatId(mtumiajiSasa.id, mtumiaji.id);
-            
-            db.ref(`unread_counts/${mtumiajiSasa.id}/${chatId}`).on("value", (snapshot) => {
-                const unreadCount = snapshot.val() || 0;
-                
-                db.ref(`chats/${chatId}/messages`).limitToLast(1).once("value", (msgSnap) => {
-                    let mudaWamwisho = "";
-                    if (msgSnap.exists()) {
-                        msgSnap.forEach(m => {
-                            const d = new Date(m.val().timestamp);
-                            mudaWamwisho = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        });
-                    }
-
-                    const rowHTML = `
-                        <div class="user-chat-row" onclick="funguaSogaKamilifu('${mtumiaji.id}', '${mtumiaji.username}', '${mtumiaji.avatar}')">
-                            <img src="${mtumiaji.avatar}" class="row-avatar">
-                            <div class="row-body">
-                                <div class="row-top">
-                                    <h4>${mtumiaji.username}</h4>
-                                    <span class="chat-time">${mudaWamwisho}</span>
-                                </div>
-                                <p class="row-status">${mtumiaji.status || 'Available'}</p>
-                            </div>
-                            ${unreadCount > 0 ? `<div class="unread-badge-circle">${unreadCount}</div>` : ""}
-                        </div>
-                    `;
-                    
-                    const mzeeUpo = document.getElementById(`row-${mtumiaji.id}`);
-                    if (mzeeUpo) {
-                        mzeeUpo.outerHTML = rowHTML;
-                    } else {
-                        eneo.innerHTML += `<div id="row-${mtumiaji.id}">${rowHTML}</div>`;
-                    }
-                });
-            });
-        }
-
-        function mchakatoWaKutumaUjumbe() {
-            const input = document.getElementById("message-text-input");
-            const maandishi = input.value.trim();
-            if (!maandishi || !chatYenyeActiveID) return;
-
-            // Zima typing mara moja ujumbe unapotumwa
-            geuzaTypingStatus(false);
-
-            const messageId = db.ref(`chats/${chatYenyeActiveID}/messages`).push().key;
-            const mlengwaId = chatYenyeActiveID.replace(mtumiajiSasa.id, "").replace("_", "");
-
-            const ujumbeData = {
-                id: messageId,
-                senderId: mtumiajiSasa.id,
-                text: maandishi,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                status: "sent"
-            };
-
-            db.ref(`chats/${chatYenyeActiveID}/messages/${messageId}`).set(ujumbeData);
-            input.value = "";
-
-            db.ref(`users/${mlengwaId}/activeChat`).once("value", (snap) => {
-                if (snap.val() !== chatYenyeActiveID) {
-                    db.ref(`unread_counts/${mlengwaId}/${chatYenyeActiveID}`).transaction((c) => (c || 0) + 1);
-                }
-            });
-        }
-
-        function sikilizaMesejiZoteZisomekeLive(chatId) {
-            db.ref(`chats/${chatId}/messages`).on("value", (snapshot) => {
-                const chatBox = document.getElementById("chat-messages-box");
-                chatBox.innerHTML = "";
-
-                snapshot.forEach((childSnap) => {
-                    const msg = childSnap.val();
-                    
-                    if (msg.senderId !== mtumiajiSasa.id && msg.status !== "read") {
-                        db.ref(`chats/${chatId}/messages/${msg.id}/status`).set("read");
-                    }
-
-                    let tickIcon = "✓"; 
-                    if (msg.status === "delivered") tickIcon = "✓✓";
-                    if (msg.status === "read") tickIcon = `<span style="color: #00a3ff;">✓✓</span>`;
-
-                    const d = new Date(msg.timestamp);
-                    const tStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-                    const bubble = document.createElement("div");
-                    bubble.className = msg.senderId === mtumiajiSasa.id ? `bubble type-${mtindoWaMesejiSasa} out` : `bubble type-${mtindoWaMesejiSasa} in`;
-                    bubble.innerHTML = `
-                        <p>${msg.text}</p>
-                        <span class="bubble-meta" style="font-size:10px;">${tStr} &nbsp; ${msg.senderId === mtumiajiSasa.id ? tickIcon : ""}</span>
-                    `;
-
-                    wekaMfumoWaKufutaMeseji(bubble, msg.id, msg.senderId, chatId);
-                    chatBox.appendChild(bubble);
-                });
-                chatBox.scrollTop = chatBox.scrollHeight;
-            });
-        }
-
-        function wekaMfumoWaKufutaMeseji(element, messageId, senderId, chatId) {
-            element.addEventListener('touchstart', (e) => {
-                holdTimer = setTimeout(() => { anzishaMchakatoWaKufuta(messageId, senderId, chatId); }, HOLD_DURATION);
-            });
-            element.addEventListener('touchend', () => { clearTimeout(holdTimer); });
-            
-            element.addEventListener('mousedown', () => {
-                holdTimer = setTimeout(() => { anzishaMchakatoWaKufuta(messageId, senderId, chatId); }, HOLD_DURATION);
-            });
-            element.addEventListener('mouseup', () => { clearTimeout(holdTimer); });
-        }
-
-        function anzishaMchakatoWaKufuta(messageId, senderId, chatId) {
-            if (senderId !== mtumiajiSasa.id) {
-                alert("Privacy violation: You cannot delete someone else's transmission! 🔒");
-                return;
-            }
-            if (confirm("Do you want to revoke and delete this transmission for everyone?")) {
-                db.ref(`chats/${chatId}/messages/${messageId}`).remove();
-            }
-        }
-
-        function funguaSogaKamilifu(mlengwaId, jina, avatar) {
-            chatYenyeActiveID = tengenezaChatId(mtumiajiSasa.id, mlengwaId);
-            db.ref(`users/${mtumiajiSasa.id}/activeChat`).set(chatYenyeActiveID);
-            db.ref(`unread_counts/${mtumiajiSasa.id}/${chatYenyeActiveID}`).set(0);
-            
-            document.getElementById("chat-screen-title").innerText = jina;
-            document.getElementById("chat-window-avatar").src = avatar;
-            
-            // SIKILIZA ONLINE STATUS NA TYPING INDICATOR KWA PAMOJA
-            db.ref(`users/${mlengwaId}/isOnline`).on("value", (onlineSnap) => {
-                const st = document.getElementById("chat-screen-online-status");
-                
-                // Sikiliza status ya typing kutoka kwa huyu mlengwa
-                db.ref(`chats/${chatYenyeActiveID}/typing/${mlengwaId}`).on("value", (typingSnap) => {
-                    const isTyping = typingSnap.val();
-                    
-                    if (isTyping === true) {
-                        st.innerText = "typing...";
-                        st.className = "typing-text-active";
-                        st.style.display = "block";
-                    } else if (onlineSnap.val() === true) {
-                        st.innerText = "online";
-                        st.className = "";
-                        st.style.display = "block";
-                    } else {
-                        st.style.display = "none";
-                    }
-                });
-            });
-
-            sikilizaMesejiZoteZisomekeLive(chatYenyeActiveID);
-            badiliScreen('chat-window-screen');
-        }
-
-        function rudiHome() {
-            if (chatYenyeActiveID) {
-                // Kama akiondoka kwenye kioo cha chat, zima typing status zote
-                geuzaTypingStatus(false);
-                const mlengwaId = chatYenyeActiveID.replace(mtumiajiSasa.id, "").replace("_", "");
-                db.ref(`chats/${chatYenyeActiveID}/typing/${mlengwaId}`).off();
-                
-                db.ref(`users/${mtumiajiSasa.id}/activeChat`).remove();
-                db.ref(`chats/${chatYenyeActiveID}/messages`).off();
-            }
-            badiliScreen('home-screen');
-        }
-
-        function washaMfumoWaOnlineStatus(userId) {
-            const amOnlineRef = db.ref(".info/connected");
-            const userStatusRef = db.ref(`users/${userId}/isOnline`);
-            amOnlineRef.on("value", (snapshot) => {
-                if (snapshot.val() == false) return;
-                userStatusRef.onDisconnect().set(false);
-                userStatusRef.set(true);
-            });
-        }
-
-        function tengenezaChatId(id1, id2) {
-            return id1 < id2 ? `${id1}_${id2}` : `${id2}_${id1}`;
-        }
-
-        function ondokaKwenyeMfumo() {
-            if (mtumiajiSasa) {
-                geuzaTypingStatus(false);
-                db.ref(`users/${mtumiajiSasa.id}/isOnline`).set(false);
-            }
-            localStorage.clear();
-            location.reload();
-        }
-    </script>
-</body>
-</html>
+        // SEARCH BAR LOGIC WITH INTEGRATED SVG SPINNER EFFECT
+        document.getElementById("search-input-field
