@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maz Connect</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f6;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            color: #111b21;
+        }
+
+        /* --- MFUMO WA KURASA (SCREEN MANAGEMENT) --- */
+        .screen {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* --- 1. LOADING / SPLASH SCREEN --- */
+        #splash-screen {
+            background-color: #0f4c4a;
+            color: white;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .splash-logo {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 38px;
+            font-weight: 800;
+            color: #0f4c4a;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .spinner {
+            width: 35px;
+            height: 35px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- 2. AUTH SCREEN (LOGIN/REGISTER) --- */
+        #auth-screen {
+            background-color: #f0f3f3;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .auth-container {
+            background: white;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .auth-header h2 { color: #0f4c4a; font-weight: 700; }
+        .auth-header p { font-size: 13px; color: #667781; }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #54656f;
+        }
+
+        .form-group input {
+            padding: 12px;
+            border: 1px solid #e9edef;
+            border-radius: 8px;
+            outline: none;
+            font-size: 15px;
+            background: #f8faf9;
+        }
+
+        .form-group input:focus {
+            border-color: #0f4c4a;
+        }
+
+        .auth-btn {
+            background: #0f4c4a;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* --- SEHEMU YA JUU (HEADER) --- */
+        .app-header {
+            background-color: #0f4c4a;
+            color: white;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 60px;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-arrow {
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            background-color: #daebd4;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #555;
+            font-size: 16px;
+            text-transform: uppercase;
+            overflow: hidden;
+            object-fit: cover;
+        }
+
+        .profile-pic img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-details .user-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .user-details .user-status {
+            font-size: 12px;
+            color: #a3e2df;
+        }
+
+        /* --- SEHEMU YA CHAT (MESSAGE CONTAINER) --- */
+        .chat-messages {
+            flex: 1;
+            margin-top: 60px;
+            margin-bottom: 65px;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: #f0f3f3;
+            background-image: radial-gradient(#d1dede 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .msg-bubble {
+            max-width: 75%;
+            padding: 10px 14px;
+            font-size: 15px;
+            position: relative;
+            line-height: 1.4;
+            word-wrap: break-word;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.2s ease;
+        }
+
+        /* --- MIFUMO YA STYLE YA BUBBLE --- */
+        .msg-style-standard.received-msg { border-radius: 16px; border-top-left-radius: 4px; }
+        .msg-style-standard.sent-msg { border-radius: 16px; border-top-right-radius: 4px; }
+
+        .msg-style-sharp.received-msg { border-radius: 0px; }
+        .msg-style-sharp.sent-msg { border-radius: 0px; }
+
+        .msg-style-pill.received-msg { border-radius: 25px; }
+        .msg-style-pill.sent-msg { border-radius: 25px; }
+
+        .msg-style-modern.received-msg { border-radius: 20px 20px 20px 5px; }
+        .msg-style-modern.sent-msg { border-radius: 20px 20px 5px 20px; }
+
+        .msg-style-leaf.received-msg { border-radius: 0px 20px 0px 20px; }
+        .msg-style-leaf.sent-msg { border-radius: 20px 0px 20px 0px; }
+
+        .msg-style-box.received-msg { border-radius: 8px; }
+        .msg-style-box.sent-msg { border-radius: 8px; }
+
+        .received-msg {
+            background-color: #ffffff;
+            align-self: flex-start;
+            color: #111b21;
+        }
+
+        .sent-msg {
+            background-color: #0f4c4a;
+            color: white;
+            align-self: flex-end;
+        }
+
+        /* Sehemu ya chini ya ujumbe */
+        .msg-meta-area {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .msg-time {
+            font-size: 10px;
+            color: #667781;
+            display: block;
+        }
+        
+        .sent-msg .msg-time {
+            color: #a3e2df;
+        }
+
+        .msg-status-tick {
+            width: 15px;
+            height: 15px;
+            fill: #667781;
+            display: inline-block;
+        }
+        .sent-msg .msg-status-tick {
+            fill: #a3e2df;
+        }
+        .sent-msg .msg-status-tick.read {
+            fill: #40c4ff;
+        }
+
+        /* --- SEHEMU YA CHINI YA KUANDIKIA --- */
+        .input-bar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #ffffff;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 65px;
+            border-top: 1px solid #e9edef;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            background-color: #f0f2f5;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            padding: 5px 16px;
+        }
+
+        .main-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            padding: 8px 0;
+            font-size: 16px;
+        }
+
+        .action-btn {
+            background-color: #0f4c4a;
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* --- SEHEMU YA CHATS LIST --- */
+        .chats-list-container {
+            background-color: #ffffff;
+            flex: 1;
+            margin-top: 60px;
+            margin-bottom: 60px;
+            overflow-y: auto;
+        }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            gap: 15px;
+            border-bottom: 1px solid #f0f2f5;
+            cursor: pointer;
+        }
+
+        .chat-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .chat-info-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-info-top .name { font-size: 16px; font-weight: 600; }
+        .chat-info-top .time { font-size: 12px; color: #8696a0; }
+        .last-message { font-size: 14px; color: #667781; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+
+        /* --- SEHEMU YA SETTINGS SCREEN --- */
+        .settings-container {
+            background-color: #f4f6f6;
+            flex: 1;
+            margin-top: 60px;
+            margin-bottom: 60px;
+            overflow-y: auto;
+        }
+
+        .settings-profile-card {
+            background-color: #ffffff;
+            padding: 20px 16px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #e9edef;
+        }
+
+        .settings-profile-card .profile-pic {
+            width: 65px;
+            height: 65px;
+            font-size: 22px;
+            background-color: #0f4c4a;
+            color: white;
+        }
+
+        /* --- EDIT PROFILE BOX --- */
+        .edit-profile-box {
+            background: white;
+            padding: 20px 16px;
+            margin-top: -10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-bottom: 1px solid #e9edef;
+        }
+
+        .avatar-upload-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .hidden-file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            font-size: 12px;
+            background: #e1eceb;
+            color: #0f4c4a;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .select-style-bar {
+            padding: 8px;
+            border: 1px solid #e9edef;
+            border-radius: 8px;
+            background: #f8faf9;
+            font-size: 14px;
+            outline: none;
+            color: #111b21;
+        }
+
+        /* --- SEHEMU YA STATUS SCREEN --- */
+        .status-container {
+            background-color: #ffffff;
+            flex: 1;
+            margin-top: 60px;
+            margin-bottom: 60px;
+            overflow-y: auto;
+            padding: 15px 16px;
+        }
+
+        .status-section-title { font-size: 14px; font-weight: 600; color: #0f4c4a; margin-bottom: 15px; text-transform: uppercase; }
+        .my-status-box { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+        .status-ring { position: relative; padding: 3px; border: 2px dashed #0f4c4a; border-radius: 50%; }
+        .status-input-area { display: flex; gap: 10px; margin-top: 15px; background: #f0f2f5; padding: 10px; border-radius: 12px; }
+        .status-input-area input { flex: 1; border: none; outline: none; background: transparent; font-size: 14px; }
+
+        /* --- BOTTOM NAVIGATION BAR --- */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            background-color: #ffffff;
+            border-top: 1px solid #e9edef;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #667781;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            gap: 5px;
+            flex: 1;
+            height: 100%;
+        }
+
+        .nav-item.active { color: #0f4c4a; }
+        .nav-svg { width: 22px; height: 22px; fill: currentColor; }
+    </style>
+</head>
+<body>
+
+    <div class="screen active" id="splash-screen">
+        <div class="splash-logo">MZ</div>
+        <h2 style="font-weight: 700; letter-spacing: 1px;">Maz Connect</h2>
+        <p style="font-size: 13px; color: #a3e2df; margin-top: -10px;">Secure & Premium Messaging</p>
+        <div class="spinner"></div>
+    </div>
+
+    <div class="screen" id="auth-screen">
+        <div class="auth-container">
+            <div class="auth-header">
+                <h2>Karibu Maz Connect</h2>
+                <p>Weka jina na barua pepe yako ili kuanza kutumia App</p>
+            </div>
+            <div class="form-group">
+                <label>Nickname / Jina la App</label>
+                <input type="text" id="auth-nickname" placeholder="Mfano: Kaka_Fahmy">
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="auth-email" placeholder="jina@email.com">
+            </div>
+            <button class="auth-btn" id="register-btn">Sajili & Ingia</button>
+        </div>
+    </div>
+
+    <div class="screen" id="chats-list-screen">
+        <div class="app-header">
+            <div class="header-left">
+                <div class="user-details" style="margin-left: 5px;">
+                    <div class="user-name" style="font-size: 22px; font-weight: 700; letter-spacing: 0.8px;">Maz Connect</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chats-list-container">
+            <div class="chat-item" onclick="openChat('Luckman', 'LU', '#daebd4')">
+                <div class="profile-pic">LU</div>
+                <div class="chat-info">
+                    <div class="chat-info-top"><span class="name">Luckman</span><span class="time">4:48 PM</span></div>
+                    <div class="last-message">Mizigo yote inasoma live hapa kiongozi!</div>
+                </div>
+            </div>
+            <div class="chat-item" onclick="openChat('Hamisi', 'HA', '#f7e2b4')">
+                <div class="profile-pic">HA</div>
+                <div class="chat-info">
+                    <div class="chat-info-top"><span class="name">Hamisi</span><span class="time">3:12 PM</span></div>
+                    <div class="last-message">Inasoma safi kabisa kwenye Firebase.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="switchTab('chats')">
+                <svg class="nav-svg" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg>
+                <span>Chats</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('status')">
+                <svg class="nav-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.53c-.26-.81-1-1.4-1.9-1.4h-1v-3c0-.55-.45-1-1-1h-6v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                <span>Status</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('settings')">
+                <svg class="nav-svg" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                <span>Settings</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="screen" id="status-screen">
+        <div class="app-header"><div class="header-left"><div class="user-name" style="font-size: 22px; font-weight: 700; margin-left:5px;">Status Updates</div></div></div>
+        <div class="status-container">
+            <div class="my-status-box">
+                <div class="status-ring"><div class="profile-pic" id="status-my-pic">MZ</div></div>
+                <div class="chat-info"><span style="font-weight: 600;" id="status-my-name">Mimi</span><span style="font-size: 13px; color: #667781;">Gusa kuongeza update mpya</span></div>
+            </div>
+            <div class="status-section-title">Status za Hivi Punde</div>
+            
+            <div id="live-statuses-list" style="display:flex; flex-direction:column; gap:15px; margin-bottom:20px;"></div>
+
+            <div class="status-input-area">
+                <input type="text" id="status-text-input" placeholder="Andika kitu kwenye status yako...">
+                <button id="post-status-btn" style="border:none; background:#0f4c4a; color:white; padding:4px 12px; border-radius:8px; cursor:pointer;">Post</button>
+            </div>
+        </div>
+        <div class="bottom-nav">
+            <div class="nav-item" onclick="switchTab('chats')"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg><span>Chats</span></div>
+            <div class="nav-item active" onclick="switchTab('status')"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.53c-.26-.81-1-1.4-1.9-1.4h-1v-3c0-.55-.45-1-1-1h-6v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg><span>Status</span></div>
+            <div class="nav-item" onclick="switchTab('settings')"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.05.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg><span>Settings</span></div>
+        </div>
+    </div>
+
+    <div class="screen" id="settings-screen">
+        <div class="app-header"><div class="header-left"><div class="user-name" style="font-size: 22px; font-weight: 700; margin-left:5px;">Settings</div></div></div>
+        <div class="settings-container">
+            <div class="settings-profile-card">
+                <div class="profile-pic" id="settings-card-pic">MZ</div>
+                <div class="chat-info">
+                    <span style="font-size: 18px; font-weight: 600;" id="settings-card-name">Maz User</span>
+                    <span style="font-size: 14px; color: #667781;" id="settings-card-email">Bado Hujasajili</span>
+                </div>
+            </div>
+
+            <div class="edit-profile-box">
+                <div class="avatar-upload-wrapper">
+                    <label class="upload-btn" for="avatar-input">Badilisha Picha ya Wasifu</label>
+                    <input type="file" id="avatar-input" class="hidden-file-input" accept="image/*" onchange="uploadAvatar()">
+                </div>
+                
+                <div class="form-group">
+                    <label>Muundo wa Chat Feature (Bubbles Style)</label>
+                    <select id="bubble-style-select" class="select-style-bar" onchange="changeBubbleStyle()">
+                        <option value="standard" selected>Standard (Kawaida)</option>
+                        <option value="sharp">Sharped (Pande Kali)</option>
+                        <option value="pill">Pill Style (Duara Kamili)</option>
+                        <option value="modern">Modern Style</option>
+                        <option value="leaf">Leaf Style (Muundo wa jani)</option>
+                        <option value="box">Boxy (Kibonyezo cha box)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Jina la Wasifu</label>
+                    <input type="text" id="edit-name-input" placeholder="Andika jina lako mpya">
+                </div>
+                <div class="form-group">
+                    <label>Hali yako (Status Bio)</label>
+                    <input type="text" id="edit-bio-input" placeholder="Mfano: Inapatikana kwenye Maz Connect">
+                </div>
+                <button class="auth-btn" style="padding:10px; font-size:14px;" onclick="saveProfileChanges()">Hifadhi Wasifu</button>
+                <button class="auth-btn" style="padding:10px; font-size:14px; background:#b32626;" onclick="logOut()">Ondoka (Log Out)</button>
+            </div>
+        </div>
+        <div class="bottom-nav">
+            <div class="nav-item" onclick="switchTab('chats')"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/></svg><span>Chats</span></div>
+            <div class="nav-item" onclick="switchTab('status')"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.53c-.26-.81-1-1.4-1.9-1.4h-1v-3c0-.55-.45-1-1-1h-6v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg><span>Status</span></div>
+            <div class="nav-item active" onclick="switchTab('settings')"><svg class="nav-svg" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg><span>Settings</span></div>
+        </div>
+    </div>
+
+    <div class="screen" id="chat-conversation-screen">
+        <div class="app-header">
+            <div class="header-left">
+                <span class="back-arrow" onclick="goBack()">❮</span>
+                <div class="profile-pic" id="chat-header-pic"></div>
+                <div class="user-details">
+                    <div class="user-name" id="chat-header-name">Inapakia...</div>
+                    <div class="user-status" id="status-text">online</div>
+                </div>
+            </div>
+        </div>
+        <div class="chat-messages" id="chat-container"></div>
+        <div class="input-bar">
+            <div class="input-wrapper">
+                <input type="text" class="main-input" id="message-input" placeholder="Andika ujumbe hapa...">
+            </div>
+            <button class="action-btn" id="send-button">
+                <svg style="width:18px; height:18px; fill:white;" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, push, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAnIP7bW3h9whqi8jvh-Slh8oRssyRt7eo",
+            authDomain: "maz-connent.firebaseapp.com",
+            databaseURL: "https://maz-connent-default-rtdb.firebaseio.com",
+            projectId: "maz-connent",
+            storageBucket: "maz-connent.appspot.com",
+            messagingSenderId: "595218560621",
+            appId: "1:595218560621:web:e6274f56c4c58e55cd3b64",
+            measurementId: "G-2RK5600BJV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Kufanya variable hizi zipatikane global kwenye vitufe vya HTML
+        window.switchTab = switchTab;
+        window.openChat = openChat;
+        window.goBack = goBack;
+        window.uploadAvatar = uploadAvatar;
+        window.changeBubbleStyle = changeBubbleStyle;
+        window.saveProfileChanges = saveProfileChanges;
+        window.logOut = logOut;
+
+        let currentUser = {
+            nickname: "Maz User",
+            email: "",
+            bio: "Inapatikana kwenye Maz Connect",
+            avatar: "",
+            bubbleStyle: "standard"
+        };
+
+        // Variable ya kuhifadhi jina la mtu unayeongea naye sasa hivi
+        let activeChatPartner = "";
+        let currentRoomId = "";
+
+        const screens = {
+            splash: document.getElementById('splash-screen'),
+            auth: document.getElementById('auth-screen'),
+            chats: document.getElementById('chats-list-screen'),
+            status: document.getElementById('status-screen'),
+            settings: document.getElementById('settings-screen'),
+            conversation: document.getElementById('chat-conversation-screen')
+        };
+
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const statusText = document.getElementById('status-text');
+        const chatHeaderName = document.getElementById('chat-header-name');
+        const chatHeaderPic = document.getElementById('chat-header-pic');
+
+        const doubleTickSvg = `
+            <svg class="msg-status-tick" viewBox="0 0 24 24">
+                <path d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM2 12l1.41-1.41 4.24 4.24-1.41 1.41L2 12z"/>
+            </svg>
+        `;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const savedUser = localStorage.getItem('maz_user');
+                screens.splash.classList.remove('active');
+                
+                if (savedUser) {
+                    currentUser = JSON.parse(savedUser);
+                    if (!currentUser.bubbleStyle) currentUser.bubbleStyle = "standard";
+                    updateUIWithUserData();
+                    screens.chats.classList.add('active');
+                } else {
+                    screens.auth.classList.add('active');
+                }
+            }, 3000);
+
+            // SIKILIZA STATUS LIVE KUTOKA FIREBASE
+            listenToLiveStatuses();
+        });
+
+        document.getElementById('register-btn').addEventListener('click', () => {
+            const nicknameInput = document.getElementById('auth-nickname').value.trim();
+            const emailInput = document.getElementById('auth-email').value.trim();
+
+            if (nicknameInput === "" || emailInput === "") {
+                alert("Tafadhali jaza Jina na Email yako vizuri kiongozi!");
+                return;
+            }
+
+            currentUser.nickname = nicknameInput;
+            currentUser.email = emailInput;
+
+            localStorage.setItem('maz_user', JSON.stringify(currentUser));
+            updateUIWithUserData();
+
+            screens.auth.classList.remove('active');
+            screens.chats.classList.add('active');
+        });
+
+        function updateUIWithUserData() {
+            const initial = currentUser.nickname.substring(0, 2).toUpperCase();
+            
+            document.getElementById('settings-card-name').innerText = currentUser.nickname;
+            document.getElementById('settings-card-email').innerText = currentUser.email;
+            document.getElementById('edit-name-input').value = currentUser.nickname;
+            document.getElementById('edit-bio-input').value = currentUser.bio;
+            document.getElementById('status-my-name').innerText = currentUser.nickname;
+            
+            document.getElementById('bubble-style-select').value = currentUser.bubbleStyle;
+
+            const settingsPic = document.getElementById('settings-card-pic');
+            const statusPic = document.getElementById('status-my-pic');
+
+            if (currentUser.avatar) {
+                settingsPic.innerHTML = `<img src="${currentUser.avatar}">`;
+                statusPic.innerHTML = `<img src="${currentUser.avatar}">`;
+            } else {
+                settingsPic.innerText = initial;
+                statusPic.innerText = initial;
+                settingsPic.style.background = "#0f4c4a";
+                settingsPic.style.color = "white";
+            }
+        }
+
+        function uploadAvatar() {
+            const file = document.getElementById('avatar-input').files[0];
+            const reader = new FileReader();
+
+            reader.onloadend = function() {
+                currentUser.avatar = reader.result;
+                updateUIWithUserData();
+            }
+
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function changeBubbleStyle() {
+            const selectBox = document.getElementById('bubble-style-select');
+            currentUser.bubbleStyle = selectBox.value;
+            
+            const bubbles = document.querySelectorAll('.msg-bubble');
+            bubbles.forEach(bubble => {
+                bubble.classList.remove('msg-style-standard', 'msg-style-sharp', 'msg-style-pill', 'msg-style-modern', 'msg-style-leaf', 'msg-style-box');
+                bubble.classList.add('msg-style-' + currentUser.bubbleStyle);
+            });
+        }
+
+        function saveProfileChanges() {
+            const newName = document.getElementById('edit-name-input').value.trim();
+            const newBio = document.getElementById('edit-bio-input').value.trim();
+
+            if (newName === "") return;
+
+            currentUser.nickname = newName;
+            currentUser.bio = newBio;
+
+            localStorage.setItem('maz_user', JSON.stringify(currentUser));
+            updateUIWithUserData();
+            alert("Wasifu wako wa Maz Connect umesasishwa! ✅");
+        }
+
+        function logOut() {
+            if (confirm("Je, unataka kweli kutoka kwenye akaunti yako ya Maz Connect?")) {
+                localStorage.removeItem('maz_user');
+                location.reload();
+            }
+        }
+
+        function switchTab(tabName) {
+            Object.values(screens).forEach(screen => screen.classList.remove('active'));
+            screens[tabName].classList.add('active');
+
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            navItems.forEach(item => {
+                if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(tabName)) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // KUTENGENEZA ROOM ID YA SIRI KATI YA WATU WAWILI ALPHABETICALLY
+        function generateRoomId(user1, user2) {
+            return [user1, user2].sort().join("_");
+        }
+
+        function openChat(name, initials, color) {
+            activeChatPartner = name;
+            chatHeaderName.innerText = name;
+            chatHeaderPic.innerText = initials;
+            chatHeaderPic.style.backgroundColor = color;
+            chatHeaderPic.innerHTML = initials;
+
+            chatContainer.innerHTML = ''; // Futa kwanza skrini ya chat
+
+            // Tengeneza chumba cha siri kwa ajili yako na huyu mshkaji tu
+            currentRoomId = generateRoomId(currentUser.nickname, activeChatPartner);
+
+            Object.values(screens).forEach(screen => screen.classList.remove('active'));
+            screens.conversation.classList.add('active');
+
+            // Sikiliza meseji za chumba hiki cha siri TU
+            listenToPrivateRoom(currentRoomId);
+        }
+
+        function goBack() {
+            activeChatPartner = "";
+            currentRoomId = "";
+            screens.conversation.classList.remove('active');
+            screens.chats.classList.add('active');
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12;
+            minutes = minutes < 10 ? '0'+minutes : minutes;
+            return hours + ':' + minutes + ' ' + ampm;
+        }
+
+        // FIREBASE LOGIC YA KUTUMA MESEJI PRIVATE
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (text === "" || currentRoomId === "") return;
+
+            const messageData = {
+                sender: currentUser.nickname,
+                message: text,
+                time: getCurrentTime(),
+                timestamp: serverTimestamp()
+            };
+
+            // Sukuma meseji kwenye chumba chenu cha siri peke yenu
+            push(ref(db, `chatRooms/${currentRoomId}`), messageData);
+            messageInput.value = "";
+        }
+
+        // FIREBASE LOGIC YA KUPOKEA MESEJI ZA CHUMBA CHA SIRI PEKEE
+        function listenToPrivateRoom(roomId) {
+            onChildAdded(ref(db, `chatRooms/${roomId}`), (snapshot) => {
+                const data = snapshot.val();
+                statusText.innerText = "typing...";
+                
+                setTimeout(() => {
+                    statusText.innerText = "online";
+                    const msgBubble = document.createElement('div');
+                    
+                    if (data.sender === currentUser.nickname) {
+                        msgBubble.classList.add('msg-bubble', 'sent-msg', `msg-style-${currentUser.bubbleStyle}`);
+                        msgBubble.innerHTML = data.message + `
+                            <div class="msg-meta-area">
+                                <span class="msg-time">${data.time || getCurrentTime()}</span>
+                                <span class="tick-container">${doubleTickSvg}</span>
+                            </div>
+                        `;
+                        setTimeout(() => {
+                            const tick = msgBubble.querySelector('.msg-status-tick');
+                            if(tick) tick.classList.add('read');
+                        }, 1000);
+                    } else {
+                        msgBubble.classList.add('msg-bubble', 'received-msg', `msg-style-${currentUser.bubbleStyle}`);
+                        msgBubble.innerHTML = `<b>${data.sender}:</b> ${data.message}` + `
+                            <div class="msg-meta-area">
+                                <span class="msg-time">${data.time || getCurrentTime()}</span>
+                            </div>
+                        `;
+                    }
+                    
+                    chatContainer.appendChild(msgBubble);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, 800);
+            });
+        }
+
+        // FIREBASE LOGIC: POST LIVE STATUS KUTOKA KWENYE BUTTON YAKO
+        document.getElementById('post-status-btn').addEventListener('click', () => {
+            const statusInput = document.getElementById('status-text-input');
+            const text = statusInput.value.trim();
+
+            if (text === "") {
+                alert("Andika kitu kwanza kabla ya kupost kiongozi!");
+                return;
+            }
+
+            const statusData = {
+                sender: currentUser.nickname,
+                text: text,
+                time: getCurrentTime(),
+                timestamp: serverTimestamp()
+            };
+
+            push(ref(db, 'statuses'), statusData);
+            statusInput.value = "";
+            alert("Status yako imewekwa live! 🚀");
+        });
+
+        // FIREBASE LOGIC: ONYESHA STATUS LIVE KWENYE UKURASA WA STATUS
+        function listenToLiveStatuses() {
+            const statusListContainer = document.getElementById('live-statuses-list');
+            
+            onChildAdded(ref(db, 'statuses'), (snapshot) => {
+                const data = snapshot.val();
+                
+                // Usionyeshe status yako mwenyewe kwenye list ya chini ya marafiki
+                if (data.sender === currentUser.nickname) return;
+
+                const statusItem = document.createElement('div');
+                statusItem.className = 'chat-item';
+                statusItem.style.padding = '10px 0';
+                statusItem.style.borderBottom = '1px solid #f0f2f5';
+
+                const initial = data.sender.substring(0, 2).toUpperCase();
+
+                statusItem.innerHTML = `
+                    <div class="profile-pic" style="background:#0f4c4a; color:white; width:45px; height:45px; font-size:14px;">${initial}</div>
+                    <div class="chat-info">
+                        <div class="chat-info-top">
+                            <span class="name" style="font-size:15px; font-weight:600;">${data.sender}</span>
+                            <span class="time" style="font-size:11px;">${data.time}</span>
+                        </div>
+                        <div class="last-message" style="color:#111b21; font-weight:500; max-width:100%; white-space:normal;">${data.text}</div>
+                    </div>
+                `;
+
+                statusListContainer.appendChild(statusItem);
+            });
+        }
+
+        let typingTimer;
+        messageInput.addEventListener('input', () => {
+            statusText.innerText = "typing...";
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => {
+                statusText.innerText = "online";
+            }, 1500);
+        });
+
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+    </script>
+</body>
+</html>
