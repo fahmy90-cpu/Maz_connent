@@ -458,11 +458,15 @@
             font-weight: 600;
             border-bottom: 1px dashed var(--border-color);
             margin-bottom: 6px;
+            background-color: var(--chat-input-bg);
+            border-radius: 4px;
+            cursor: not-allowed;
         }
 
         .settings-edit-input.bio-input {
             font-size: 13px;
             color: var(--text-muted);
+            border-bottom: 1px dashed var(--border-color);
         }
 
         .settings-options-list {
@@ -759,7 +763,7 @@
                     <input type="file" id="avatar-file-input" accept="image/*" style="display: none;" onchange="handlePichaYaProfile(event)">
                 </div>
                 <div class="profile-info">
-                    <input type="text" id="user-settings-name" class="settings-edit-input name-input" value="Fahmy" placeholder="Nickname" oninput="lindaMabadilikoYaMtumiaji()">
+                    <input type="text" id="user-settings-name" class="settings-edit-input name-input" readonly value="" placeholder="Username locked" style="pointer-events: none;">
                     <input type="text" id="user-settings-status" class="settings-edit-input bio-input" value="Available on Maz Connect" placeholder="Set your status bio..." oninput="lindaMabadilikoYaMtumiaji()">
                 </div>
             </div>
@@ -991,16 +995,11 @@
         function lindaMabadilikoYaMtumiaji() {
             if (!mtumiajiSasa) return;
 
-            const jinaJipya = document.getElementById("user-settings-name").value.trim().toLowerCase().replace(/\s+/g, '_');
             const bioMpya = document.getElementById("user-settings-status").value.trim();
 
-            if(!jinaJipya) return;
-
-            mtumiajiSasa.username = jinaJipya;
             mtumiajiSasa.status = bioMpya;
             localStorage.setItem("maz_user", JSON.stringify(mtumiajiSasa));
 
-            db.ref(`users/${mtumiajiSasa.id}/username`).set(jinaJipya);
             db.ref(`users/${mtumiajiSasa.id}/status`).set(bioMpya);
         }
 
@@ -1129,7 +1128,7 @@
 
             if(spinnerElement) spinnerElement.style.display = "block";
 
-            db.ref("users").orderByChild("username").startAt(txt).endAt(txt + "\uf8ff").once("value", (snap) => {
+            db.ref("users").once("value", (snap) => {
                 listEneo.innerHTML = "";
                 if(spinnerElement) spinnerElement.style.display = "none";
 
@@ -1142,7 +1141,10 @@
                 snap.forEach((child) => {
                     const usr = child.val();
                     if (mtumiajiSasa && usr.id === mtumiajiSasa.id) return;
-                    uniqueUsersMap.set(usr.id, usr);
+                    
+                    if (usr.username && usr.username.toLowerCase().includes(txt)) {
+                        uniqueUsersMap.set(usr.id, usr);
+                    }
                 });
 
                 if (uniqueUsersMap.size === 0) {
@@ -1262,7 +1264,6 @@
             db.ref(`chats/${chatId}/messages`).off();
             chatBox.innerHTML = "";
 
-            // USALAMA WA DOUBLE MESSAGES: Kutumia child_added badala ya value
             db.ref(`chats/${chatId}/messages`).on("child_added", (childSnap) => {
                 const msg = childSnap.val();
                 
@@ -1292,9 +1293,7 @@
                 chatBox.scrollTop = chatBox.scrollHeight;
             });
 
-            // Kusikiliza mabadiliko ya kufuta meseji (Revoke) live bila kurefresh app
             db.ref(`chats/${chatId}/messages`).on("child_removed", () => {
-                // Kama ujumbe umefutwa, tunafuta orodha na kuruhusu child_added isome zilizobaki kwa usalama
                 funguaSogaKamilifuTenaBilaKuvuruga(chatId);
             });
         }
@@ -1407,15 +1406,3 @@
         function tengenezaChatId(id1, id2) {
             return id1 < id2 ? `${id1}_${id2}` : `${id2}_${id1}`;
         }
-
-        function ondokaKwenyeMfumo() {
-            if (mtumiajiSasa) {
-                geuzaTypingStatus(false);
-                db.ref(`users/${mtumiajiSasa.id}/isOnline`).set(false);
-            }
-            localStorage.clear();
-            location.reload();
-        }
-    </script>
-</body>
-</html>
