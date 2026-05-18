@@ -498,7 +498,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-        }
+            }
 
         .settings-icon svg {
             fill: var(--text-muted);
@@ -1095,7 +1095,7 @@
             if (!mtumiajiSasa) return;
             const listEneo = document.getElementById("chats-list-container");
 
-            db.ref(`unread_counts/${mtumiajiSasa.id}`).on("value", (snapshot) => {
+            db.ref(`chats`).on("value", (snapshot) => {
                 if (document.getElementById("search-input-field").value.trim() !== "") return;
 
                 if (!snapshot.exists()) {
@@ -1104,17 +1104,26 @@
                 }
 
                 listEneo.innerHTML = "";
+                let mazungumzoYapo = false;
+
                 snapshot.forEach((childSnap) => {
                     const chatId = childSnap.key;
-                    const vipande = chatId.split('_');
-                    const mlengwaId = vipande[0] === mtumiajiSasa.id ? vipande[1] : vipande[0];
+                    if (chatId.includes(mtumiajiSasa.id)) {
+                        mazungumzoYapo = true;
+                        const vipande = chatId.split('_');
+                        const mlengwaId = vipande[0] === mtumiajiSasa.id ? vipande[1] : vipande[0];
 
-                    db.ref(`users/${mlengwaId}`).once("value", (userSnap) => {
-                        if (userSnap.exists()) {
-                            vutaIdadiYaMesejiNaKuonyeshaRow(userSnap.val(), listEneo);
-                        }
-                    });
+                        db.ref(`users/${mlengwaId}`).once("value", (userSnap) => {
+                            if (userSnap.exists()) {
+                                vutaIdadiYaMesejiNaKuonyeshaRow(userSnap.val(), listEneo);
+                            }
+                        });
+                    }
                 });
+
+                if (!mazungumzoYapo) {
+                    listEneo.innerHTML = `<div style="padding:40px 20px; text-align:center; color:#667781; font-size:14px;">No recent chats. Search for usernames above to transmit messages!</div>`;
+                }
             });
         }
 
@@ -1173,7 +1182,6 @@
                 </div>`;
         }
 
-        // Cache busting kiotomatiki kwenye picha za avatar za watumiaji wote
         function vutaIdadiYaMesejiNaKuonyeshaRow(mtumiaji, eneo) {
             if(!mtumiajiSasa) return;
             const chatId = tengenezaChatId(mtumiajiSasa.id, mtumiaji.id);
@@ -1202,7 +1210,6 @@
                         ? `<i class="fa-solid fa-circle-check" style="color: #00bfa5; margin-left: 5px; font-size: 14px;"></i>` 
                         : '';
 
-                    // Limeongezwa kache busting '?v='+Date.now() hapa ikiwa sio base64
                     const avatarUrl = (mtumiaji.avatar && mtumiaji.avatar.startsWith('data:')) ? mtumiaji.avatar : mtumiaji.avatar + '?v=' + Date.now();
 
                     const rowHTML = `
@@ -1244,24 +1251,28 @@
             const vipande = chatYenyeActiveID.split('_');
             const mlengwaId = vipande[0] === mtumiajiSasa.id ? vipande[1] : vipande[0];
 
-            const ujumbeData = {
-                id: messageId,
-                senderId: mtumiajiSasa.id,
-                text: maandishi,
-                timestamp: firebase.database.ServerValue.TIMESTAMP,
-                status: "sent"
-            };
+            db.ref(`users/${mlengwaId}/isOnline`).once("value", (onlineSnap) => {
+                const isTargetOnline = onlineSnap.val() === true;
+                
+                const ujumbeData = {
+                    id: messageId,
+                    senderId: mtumiajiSasa.id,
+                    text: maandishi,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    status: isTargetOnline ? "delivered" : "sent"
+                };
 
-            db.ref(`chats/${chatYenyeActiveID}/messages/${messageId}`).set(ujumbeData);
-            input.value = "";
+                db.ref(`chats/${chatYenyeActiveID}/messages/${messageId}`).set(ujumbeData);
+                input.value = "";
 
-            db.ref(`users/${mlengwaId}/activeChat`).once("value", (snap) => {
-                if (snap.val() !== chatYenyeActiveID) {
-                    db.ref(`unread_counts/${mlengwaId}/${chatYenyeActiveID}`).transaction((c) => (c || 0) + 1);
-                }
+                db.ref(`users/${mlengwaId}/activeChat`).once("value", (snap) => {
+                    if (snap.val() !== chatYenyeActiveID) {
+                        db.ref(`unread_counts/${mlengwaId}/${chatYenyeActiveID}`).transaction((c) => (c || 0) + 1);
+                    }
+                });
+                
+                db.ref(`unread_counts/${mtumiajiSasa.id}/${chatYenyeActiveID}`).transaction((c) => (c || 0));
             });
-            
-            db.ref(`unread_counts/${mtumiajiSasa.id}/${chatYenyeActiveID}`).transaction((c) => (c || 0));
         }
 
         function sikilizaMesejiZoteZisomekeLive(chatId) {
@@ -1280,7 +1291,7 @@
 
                 let tickIcon = "✓"; 
                 if (msg.status === "delivered") tickIcon = "✓✓";
-                if (msg.status === "read") tickIcon = `<span style="color: #00a3ff;">✓✓</span>`;
+                if (msg.status === "read") tickIcon = `<span style="color: #00bfa5;">✓✓</span>`;
 
                 let tStr = "";
                 if (msg.timestamp) {
@@ -1300,6 +1311,13 @@
                 chatBox.scrollTop = chatBox.scrollHeight;
             });
 
+            db.ref(`chats/${chatId}/messages`).on("child_changed", (childSnap) => {
+                const msg = childSnap.val();
+                if (msg.senderId === mtumiajiSasa.id) {
+                    funguaSogaKamilifuTenaBilaKuvuruga(chatId);
+                }
+            });
+
             db.ref(`chats/${chatId}/messages`).on("child_removed", () => {
                 funguaSogaKamilifuTenaBilaKuvuruga(chatId);
             });
@@ -1311,7 +1329,7 @@
             db.ref(`chats/${chatId}/messages`).once("value", (snapshot) => {
                 snapshot.forEach((childSnap) => {
                     const msg = childSnap.val();
-                    let tickIcon = msg.status === "read" ? `<span style="color: #00a3ff;">✓✓</span>` : (msg.status === "delivered" ? "✓✓" : "✓");
+                    let tickIcon = msg.status === "read" ? `<span style="color: #00bfa5;">✓✓</span>` : (msg.status === "delivered" ? "✓✓" : "✓");
                     let tStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
                     
                     const bubble = document.createElement("div");
@@ -1338,7 +1356,6 @@
 
         function anzishaMchakatoWaKufuta(messageId, senderId, chatId) {
             if (!mtumiajiSasa || senderId !== mtumiajiSasa.id) {
-                alert("Privacy violation: You cannot delete someone else's transmission! 🔒");
                 return;
             }
             if (confirm("Do you want to revoke and delete this transmission for everyone?")) {
@@ -1407,6 +1424,22 @@
                 if (snapshot.val() == false) return;
                 userStatusRef.onDisconnect().set(false);
                 userStatusRef.set(true);
+
+                // Kazi ya kubadili double ticks kiotomatiki kwa meseji zote zilizokuwa zinasubiri
+                db.ref("chats").once("value", (chatsSnap) => {
+                    chatsSnap.forEach((chat) => {
+                        if (chat.key.includes(userId)) {
+                            db.ref(`chats/${chat.key}/messages`).once("value", (msgSnap) => {
+                                msgSnap.forEach((m) => {
+                                    const msgData = m.val();
+                                    if (msgData.senderId !== userId && msgData.status === "sent") {
+                                        db.ref(`chats/${chat.key}/messages/${msgData.id}/status`).set("delivered");
+                                    }
+                                });
+                            });
+                        }
+                    });
+                });
             });
         }
 
