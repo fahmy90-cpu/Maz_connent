@@ -244,6 +244,7 @@
 
         .row-body {
             flex: 1;
+            overflow: hidden;
         }
 
         .row-top {
@@ -255,6 +256,8 @@
         .row-top h4 {
             font-size: 16px;
             color: var(--text-color);
+            display: flex;
+            align-items: center;
         }
 
         .chat-time {
@@ -657,6 +660,7 @@
             100% { opacity: 1; }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
@@ -697,7 +701,7 @@
 
         <div class="chats-scroll-area" id="chats-list-container">
             <div style="padding:40px 20px; text-align:center; color:#667781; font-size:14px;">
-                Type the name of the contact you wish to reach in the search bar above...
+                Loading your chat history...
             </div>
         </div>
 
@@ -892,6 +896,8 @@
                         if (mtumiajiSasa && mtumiajiSasa.id) {
                             washaMfumoWaOnlineStatus(mtumiajiSasa.id);
                             pakiaTaarifaZaSettings();
+                            // Hapa sasa tunaita chat history list badala ya kuacha skrini tupu
+                            vutaNaKuonyeshaChatHistory();
                             badiliScreen('home-screen');
                         } else {
                             badiliScreen('auth-screen');
@@ -1054,9 +1060,39 @@
             db.ref(`users/${userId}`).set(mtumiajiSasa).then(() => {
                 washaMfumoWaOnlineStatus(userId);
                 pakiaTaarifaZaSettings();
+                vutaNaKuonyeshaChatHistory();
                 badiliScreen('home-screen');
             }).catch((error) => {
                 alert("Database execution error: " + error.message);
+            });
+        }
+
+        // FEATURE MPYA: Inaleta list ya watu wote mliochat nao mbele (WhatsApp Style) automatically!
+        function vutaNaKuonyeshaChatHistory() {
+            if (!mtumiajiSasa) return;
+            const listEneo = document.getElementById("chats-list-container");
+
+            db.ref(`unread_counts/${mtumiajiSasa.id}`).on("value", (snapshot) => {
+                // Kama search imefunguliwa, isivuruge matokeo ya search
+                if (document.getElementById("search-input-field").value.trim() !== "") return;
+
+                if (!snapshot.exists()) {
+                    listEneo.innerHTML = `<div style="padding:40px 20px; text-align:center; color:#667781; font-size:14px;">No recent chats. Use the search bar above to look up friends and start a transmission!</div>`;
+                    return;
+                }
+
+                listEneo.innerHTML = "";
+                snapshot.forEach((childSnap) => {
+                    const chatId = childSnap.key;
+                    const vipande = chatId.split('_');
+                    const mlengwaId = vipande[0] === mtumiajiSasa.id ? vipande[1] : vipande[0];
+
+                    db.ref(`users/${mlengwaId}`).once("value", (userSnap) => {
+                        if (userSnap.exists()) {
+                            vutaIdadiYaMesejiNaKuonyeshaRow(userSnap.val(), listEneo);
+                        }
+                    });
+                });
             });
         }
 
@@ -1066,7 +1102,8 @@
             const spinnerElement = document.getElementById("search-loading-spinner");
 
             if (!txt) {
-                listEneo.innerHTML = `<div style="padding:40px 20px; text-align:center; color:#667781; font-size:14px;">Type the name of the contact you wish to reach in the search bar above...</div>`;
+                // Kama amefuta maandishi kwenye search bar, rudisha ile chat history ya mbele automatically
+                vutaNaKuonyeshaChatHistory();
                 if(spinnerElement) spinnerElement.style.display = "none";
                 return;
             }
@@ -1121,24 +1158,36 @@
                 
                 db.ref(`chats/${chatId}/messages`).limitToLast(1).once("value", (msgSnap) => {
                     let mudaWamwisho = "";
+                    let mwishoMesejiText = mtumiaji.status || 'Available';
+
                     if (msgSnap.exists()) {
                         msgSnap.forEach(m => {
-                            if (m.val().timestamp) {
-                                const d = new Date(m.val().timestamp);
+                            const data = m.val();
+                            if (data.timestamp) {
+                                const d = new Date(data.timestamp);
                                 mudaWamwisho = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            }
+                            if (data.text) {
+                                mwishoMesejiText = data.text; // Inaonyesha meseji ya mwisho chini ya jina (kama WhatsApp)
                             }
                         });
                     }
+
+                    // KUKAGUA NA KUONYESHA BLUE TICK KAMA IPO LIVE
+                    const hasBlueTick = mtumiaji.is_verified === true || mtumiaji.is_verified === "true";
+                    const blueTickHTML = hasBlueTick 
+                        ? `<i class="fa-solid fa-circle-check" style="color: #38bdf8; margin-left: 6px; font-size: 14px;"></i>` 
+                        : '';
 
                     const rowHTML = `
                         <div class="user-chat-row" onclick="funguaSogaKamilifu('${mtumiaji.id}', '${mtumiaji.username}', '${mtumiaji.avatar}')">
                             <img src="${mtumiaji.avatar}" class="row-avatar">
                             <div class="row-body">
                                 <div class="row-top">
-                                    <h4>${mtumiaji.username}</h4>
+                                    <h4>${mtumiaji.username} ${blueTickHTML}</h4>
                                     <span class="chat-time">${mudaWamwisho}</span>
                                 </div>
-                                <p class="row-status">${mtumiaji.status || 'Available'}</p>
+                                <p class="row-status">${mwishoMesejiText}</p>
                             </div>
                             ${unreadCount > 0 ? `<div class="unread-badge-circle">${unreadCount}</div>` : ""}
                         </div>
@@ -1176,11 +1225,15 @@
             db.ref(`chats/${chatYenyeActiveID}/messages/${messageId}`).set(ujumbeData);
             input.value = "";
 
+            // Inasave unread count na kutengeneza node kwenye unread_counts ili jina litokee mbele hata kama hawajawahi kusearchiana kabla
             db.ref(`users/${mlengwaId}/activeChat`).once("value", (snap) => {
                 if (snap.val() !== chatYenyeActiveID) {
                     db.ref(`unread_counts/${mlengwaId}/${chatYenyeActiveID}`).transaction((c) => (c || 0) + 1);
                 }
             });
+            
+            // Hakikisha na kwako inajisajili kwenye unread history ili isipotee mbele
+            db.ref(`unread_counts/${mtumiajiSasa.id}/${chatYenyeActiveID}`).transaction((c) => (c || 0));
         }
 
         function sikilizaMesejiZoteZisomekeLive(chatId) {
@@ -1285,6 +1338,8 @@
                 db.ref(`users/${mtumiajiSasa.id}/activeChat`).remove();
                 db.ref(`chats/${chatYenyeActiveID}/messages`).off();
             }
+            // Ukirudi nyuma tunaload tena active chat history ili kila kitu kiwe up to date
+            vutaNaKuonyeshaChatHistory();
             badiliScreen('home-screen');
         }
 
