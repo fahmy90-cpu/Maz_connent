@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Maz Connect</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -1170,6 +1173,7 @@
                 </div>`;
         }
 
+        // Cache busting kiotomatiki kwenye picha za avatar za watumiaji wote
         function vutaIdadiYaMesejiNaKuonyeshaRow(mtumiaji, eneo) {
             if(!mtumiajiSasa) return;
             const chatId = tengenezaChatId(mtumiajiSasa.id, mtumiaji.id);
@@ -1198,9 +1202,12 @@
                         ? `<i class="fa-solid fa-circle-check" style="color: #00bfa5; margin-left: 5px; font-size: 14px;"></i>` 
                         : '';
 
+                    // Limeongezwa kache busting '?v='+Date.now() hapa ikiwa sio base64
+                    const avatarUrl = (mtumiaji.avatar && mtumiaji.avatar.startsWith('data:')) ? mtumiaji.avatar : mtumiaji.avatar + '?v=' + Date.now();
+
                     const rowHTML = `
-                        <div class="user-chat-row" onclick="funguaSogaKamilifu('${mtumiaji.id}', '${mtumiaji.username}', '${mtumiaji.avatar}')">
-                            <img src="${mtumiaji.avatar}" class="row-avatar" onclick="event.stopPropagation(); alert('Profile image zoomed for: ${mtumiaji.username}');">
+                        <div class="user-chat-row" onclick="funguaSogaKamilifu('${mtumiaji.id}', '${mtumiaji.username}', '${avatarUrl}')">
+                            <img src="${avatarUrl}" class="row-avatar" onclick="event.stopPropagation(); alert('Profile image zoomed for: ${mtumiaji.username}');">
                             <div class="row-body">
                                 <div class="row-top">
                                     <h4>${mtumiaji.username} ${blueTickHTML}</h4>
@@ -1403,6 +1410,25 @@
             });
         }
 
+        document.getElementById("message-text-input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                mchakatoWaKutumaUjumbe();
+            }
+        });
+
         function tengenezaChatId(id1, id2) {
             return id1 < id2 ? `${id1}_${id2}` : `${id2}_${id1}`;
         }
+
+        function ondokaKwenyeMfumo() {
+            if (mtumiajiSasa) {
+                geuzaTypingStatus(false);
+                db.ref(`users/${mtumiajiSasa.id}/isOnline`).set(false);
+            }
+            localStorage.clear();
+            location.reload();
+        }
+    </script>
+</body>
+</html>
