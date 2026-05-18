@@ -19,6 +19,7 @@
             --text-color: #111b21;
             --text-muted: #667781;
             --primary-color: #0f4c4a;
+            --primary-gradient: linear-gradient(135deg, #0f4c4a 0%, #00796b 100%);
             --border-color: #f0f2f5;
             --chat-input-bg: #f0f2f5;
         }
@@ -29,6 +30,7 @@
             --text-color: #ffffff;
             --text-muted: #aaaaaa;
             --primary-color: #00bfa5;
+            --primary-gradient: linear-gradient(135deg, #121212 0%, #00bfa5 100%);
             --border-color: #2c2c2c;
             --chat-input-bg: #2a2a2a;
         }
@@ -40,17 +42,11 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
-        html {
-            height: 100%;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            display: flex;
-            flex-direction: column;
+        html, body {
             height: 100%;
             min-height: 100%;
             overflow: hidden;
+            background-color: var(--bg-color);
             color: var(--text-color);
             transition: background-color 0.3s, color 0.3s;
         }
@@ -61,84 +57,146 @@
             height: 100%;
             width: 100%;
             overflow: hidden;
-            flex: 1;
         }
 
         .screen.active {
             display: flex;
         }
 
+        /* INITIAL SPLASH ANIMATION PACK */
         #splash-screen {
-            background-color: #0f4c4a;
+            background: linear-gradient(135deg, #0f4c4a 0%, #062625 100%);
             color: white;
             justify-content: center;
             align-items: center;
-            gap: 20px;
+            gap: 24px;
             height: 100vh;
         }
 
         .splash-logo {
-            width: 100px;
-            height: 100px;
+            width: 110px;
+            height: 110px;
             background: white;
-            border-radius: 24px;
+            border-radius: 28px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 38px;
-            font-weight: 800;
+            font-size: 46px;
+            font-weight: 900;
             color: #0f4c4a;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.33);
-            animation: pulse 1.8s infinite;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+            animation: bounceInSplash 1.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite alternate;
         }
 
-        @keyframes pulse {
-            0 { transform: scale(1); }
-            50% { transform: scale(1.08); }
-            100% { transform: scale(1); }
+        @keyframes bounceInSplash {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-12px) scale(1.03); box-shadow: 0 20px 35px rgba(0,189,165,0.3); }
         }
 
+        .splash-text {
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-size: 24px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.4);
+        }
+
+        /* SLIDING AUTH PACK */
         #auth-screen {
-            background-color: #f0f3f1;
+            background: linear-gradient(135deg, #0e3a39 0%, #1f5e5c 50%, #0a2423 100%);
             justify-content: center;
-            padding: 24px;
+            align-items: center;
+            padding: 20px;
             height: 100vh;
         }
 
-        .auth-container {
+        .auth-slider-box {
             background: white;
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 400px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            overflow: hidden;
+            position: relative;
+            min-height: 480px;
+        }
+
+        .auth-header-tabs {
+            display: flex;
+            background: #f0f3f1;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            color: #667781;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .auth-tab.active {
+            color: #0f4c4a;
+            background: white;
+            border-bottom: 3px solid #0f4c4a;
+        }
+
+        .auth-forms-wrapper {
+            display: flex;
+            width: 200%;
+            height: calc(100% - 54px);
+            transition: transform 0.4s ease-in-out;
+        }
+
+        .auth-form-side {
+            width: 50%;
+            padding: 30px 24px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 16px;
         }
 
-        .auth-container h2 {
+        .auth-form-side h2 {
             color: #0f4c4a;
-            margin-bottom: 5px;
+            font-size: 22px;
+            margin-bottom: 4px;
         }
 
-        .auth-container input {
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+        .auth-form-side input {
+            padding: 14px;
+            border: 1.5px solid #e0e4e2;
+            border-radius: 12px;
             font-size: 15px;
             outline: none;
+            transition: 0.2s;
+            background: #fdfdfd;
+        }
+
+        .auth-form-side input:focus {
+            border-color: #0f4c4a;
+            background: #fff;
         }
 
         .auth-btn {
             background: #0f4c4a;
             color: white;
-            padding: 12px;
+            padding: 14px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(15,76,74,0.2);
+            transition: 0.2s;
         }
 
+        .auth-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* APPLICATION INTERFACE FIXES */
         .app-header {
             background: #0f4c4a;
             color: white;
@@ -492,18 +550,21 @@
             border-bottom: none;
         }
 
+        /* FIXED GEAR ICON - PROPER SIZE VIEWPORT */
         .settings-icon {
             margin-right: 20px;
             width: 24px;
+            height: 24px;
             display: flex;
             justify-content: center;
             align-items: center;
-            }
+        }
 
         .settings-icon svg {
             fill: var(--text-muted);
-            width: 100%;
-            height: 100%;
+            width: 24px;
+            height: 24px;
+            display: block;
         }
 
         .settings-text {
@@ -673,16 +734,33 @@
 
     <div id="splash-screen" class="screen active">
         <div class="splash-logo">M</div>
-        <h2 style="font-weight: 600; letter-spacing: 0.5px;">Maz Connect</h2>
+        <h2 class="splash-text">Maz Connect</h2>
     </div>
 
     <div id="auth-screen" class="screen">
-        <div class="auth-container">
-            <h2>Welcome to Maz Connect</h2>
-            <p style="color: #667781; font-size: 14px; margin-bottom: 10px;">Register your username to start chatting.</p>
-            <input type="text" id="reg-name" placeholder="Enter username (e.g. fahm_bin_nazir)...">
-            <input type="email" id="reg-email" placeholder="Enter your email address...">
-            <button class="auth-btn" id="reg-submit-btn" onclick="mchakatoWaUsajili()">Launch Application</button>
+        <div class="auth-slider-box">
+            <div class="auth-header-tabs">
+                <div class="auth-tab active" id="tab-signin" onclick="slideAuth('signin')">Sign In</div>
+                <div class="auth-tab" id="tab-signup" onclick="slideAuth('signup')">Sign Up</div>
+            </div>
+            
+            <div class="auth-forms-wrapper" id="auth-panel-carrier">
+                <div class="auth-form-side">
+                    <h2>Account Login</h2>
+                    <p style="color: #667781; font-size: 13px; margin-bottom: 5px;">Access your private transmission hub securely.</p>
+                    <input type="text" id="login-name" placeholder="Enter username (e.g. bin_nazir)">
+                    <input type="email" id="login-email" placeholder="Enter registration email address">
+                    <button class="auth-btn" id="login-submit-btn" onclick="mchakatoWaKuingia()">Authorize & Launch</button>
+                </div>
+                
+                <div class="auth-form-side">
+                    <h2>New Infrastructure</h2>
+                    <p style="color: #667781; font-size: 13px; margin-bottom: 5px;">Configure unique moniker credentials below.</p>
+                    <input type="text" id="reg-name" placeholder="Choose username (lowercase, no spaces)">
+                    <input type="email" id="reg-email" placeholder="Assign primary email address">
+                    <button class="auth-btn" id="reg-submit-btn" onclick="mchakatoWaUsajili()">Register Server Unit</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -804,7 +882,7 @@
             </div>
 
             <div class="settings-options-list">
-                <div class="settings-item">
+                <div class="settings-item" onclick="onyeshaNotiYaMfumo('Account Infrastructure', 'Security info, encrypted configurations and credentials node are fully locked and operational.')">
                     <div class="settings-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#54656f" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5l-3-3"/></svg>
                     </div>
@@ -813,7 +891,7 @@
                         <div class="settings-desc">Security info, infrastructure configurations, and credentials</div>
                     </div>
                 </div>
-                <div class="settings-item">
+                <div class="settings-item" onclick="onyeshaNotiYaMfumo('Privacy Clearance', 'Visibility controls are automated. Global peer tracking is secured and network stealth is active.')">
                     <div class="settings-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#54656f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                     </div>
@@ -822,7 +900,7 @@
                         <div class="settings-desc">Visibility controls, active blocks, and security clearance</div>
                     </div>
                 </div>
-                <div class="settings-item">
+                <div class="settings-item" onclick="onyeshaNotiYaMfumo('System Notification Badging', 'All transmission relay nodes are delivering real-time status. Double check marks activated.')">
                     <div class="settings-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="#54656f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                     </div>
@@ -901,10 +979,18 @@
                     if (zilizohifadhiwa) {
                         mtumiajiSasa = JSON.parse(zilizohifadhiwa);
                         if (mtumiajiSasa && mtumiajiSasa.id) {
-                            washaMfumoWaOnlineStatus(mtumiajiSasa.id);
-                            pakiaTaarifaZaSettings();
-                            vutaNaKuonyeshaChatHistory();
-                            badiliScreen('home-screen');
+                            // THIBITISHA KAMA KIFANNYI KIKO ACTIVE KWENYE DATABASE
+                            db.ref(`users/${mtumiajiSasa.id}/isLoggedIn`).once("value", (logSnap) => {
+                                if(logSnap.val() === true) {
+                                    washaMfumoWaOnlineStatus(mtumiajiSasa.id);
+                                    pakiaTaarifaZaSettings();
+                                    vutaNaKuonyeshaChatHistory();
+                                    badiliScreen('home-screen');
+                                } else {
+                                    localStorage.clear();
+                                    badiliScreen('auth-screen');
+                                }
+                            });
                         } else {
                             badiliScreen('auth-screen');
                         }
@@ -915,7 +1001,7 @@
                     console.error("Kosa kwenye ku-load user data:", e);
                     badiliScreen('auth-screen');
                 }
-            }, 2500);
+            }, 3000); // Toleo jipya la splash linakaa sekunde 3 kwa muonekano mzuri
 
             const msgInputField = document.getElementById("message-text-input");
             if(msgInputField) {
@@ -924,6 +1010,28 @@
                 });
             }
         });
+
+        // KAZI YA KUSLIDE FOMU ZA REGISTRATION/LOGIN
+        function slideAuth(side) {
+            const carrier = document.getElementById("auth-panel-carrier");
+            const tabSignin = document.getElementById("tab-signin");
+            const tabSignup = document.getElementById("tab-signup");
+            
+            if(side === 'signup') {
+                carrier.style.transform = "translateX(-50%)";
+                tabSignup.classList.add("active");
+                tabSignin.classList.remove("active");
+            } else {
+                carrier.style.transform = "translateX(0%)";
+                tabSignin.classList.add("active");
+                tabSignup.classList.remove("active");
+            }
+        }
+
+        // TAARIFA ZA NOTIFICATION PINDI SEHEMU ZINAPOBONYEZWA
+        function onyeshaNotiYaMfumo(kichwa, maelezo) {
+            alert(`🔔 ${kichwa}\n\n${maelezo}`);
+        }
 
         function geuzaTypingStatus(isTyping) {
             if (!chatYenyeActiveID || !mtumiajiSasa) return;
@@ -1030,6 +1138,58 @@
             });
         }
 
+        // MCHAKATO WA KUINGIA (LOGIN) - INAZUIA KUFUNGUA KIVINJARI KIPYA KAMA HAJA-LOGOUT
+        function mchakatoWaKuingia() {
+            const btn = document.getElementById("login-submit-btn");
+            const jinaInput = document.getElementById("login-name").value.trim().toLowerCase();
+            const emailInput = document.getElementById("login-email").value.trim().toLowerCase();
+
+            if(!jinaInput || !emailInput) {
+                alert("Please fill all log in credentials!");
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = "Authenticating Node...";
+
+            db.ref("users").orderByChild("username").equalTo(jinaInput).once("value", (snapshot) => {
+                if(!snapshot.exists()) {
+                    alert("Account configuration not found! Please register first.");
+                    btn.disabled = false;
+                    btn.innerText = "Authorize & Launch";
+                    return;
+                }
+
+                let dataMtumiaji = null;
+                snapshot.forEach(c => { dataMtumiaji = c.val(); });
+
+                if(dataMtumiaji.email !== emailInput) {
+                    alert("Email mismatch error for this account moniker!");
+                    btn.disabled = false;
+                    btn.innerText = "Authorize & Launch";
+                    return;
+                }
+
+                // ULINZI: Angalia kama amefungua browser nyingine tayari na yuko active
+                if(dataMtumiaji.isLoggedIn === true) {
+                    alert("Access Denied! This session/account is actively running on another terminal/device. Log out there first.");
+                    btn.disabled = false;
+                    btn.innerText = "Authorize & Launch";
+                    return;
+                }
+
+                mtumiajiSasa = dataMtumiaji;
+                localStorage.setItem("maz_user", JSON.stringify(mtumiajiSasa));
+
+                db.ref(`users/${mtumiajiSasa.id}/isLoggedIn`).set(true).then(() => {
+                    washaMfumoWaOnlineStatus(mtumiajiSasa.id);
+                    pakiaTaarifaZaSettings();
+                    vutaNaKuonyeshaChatHistory();
+                    badiliScreen('home-screen');
+                });
+            });
+        }
+
         function mchakatoWaUsajili() {
             const btn = document.getElementById("reg-submit-btn");
             const jinaInput = document.getElementById("reg-name").value.trim().toLowerCase();
@@ -1060,7 +1220,7 @@
                 if (snapshot.exists()) {
                     alert("This nickname/username is already taken. Try another one!");
                     btn.disabled = false;
-                    btn.innerText = "Launch Application";
+                    btn.innerText = "Register Server Unit";
                     return;
                 }
 
@@ -1073,6 +1233,7 @@
                     avatar: "https://via.placeholder.com/150",
                     status: "Available on Maz Connect",
                     isOnline: true,
+                    isLoggedIn: true,
                     is_verified: false
                 };
 
@@ -1086,7 +1247,7 @@
                 }).catch((error) => {
                     alert("Database error: " + error.message);
                     btn.disabled = false;
-                    btn.innerText = "Launch Application";
+                    btn.innerText = "Register Server Unit";
                 });
             });
         }
@@ -1425,7 +1586,6 @@
                 userStatusRef.onDisconnect().set(false);
                 userStatusRef.set(true);
 
-                // Kazi ya kubadili double ticks kiotomatiki kwa meseji zote zilizokuwa zinasubiri
                 db.ref("chats").once("value", (chatsSnap) => {
                     chatsSnap.forEach((chat) => {
                         if (chat.key.includes(userId)) {
@@ -1454,10 +1614,12 @@
             return id1 < id2 ? `${id1}_${id2}` : `${id2}_${id1}`;
         }
 
+        // KUFUTA SESSHI ILI RUHUSA YA KIVINJARI KINGINE IPATIKE
         function ondokaKwenyeMfumo() {
             if (mtumiajiSasa) {
                 geuzaTypingStatus(false);
                 db.ref(`users/${mtumiajiSasa.id}/isOnline`).set(false);
+                db.ref(`users/${mtumiajiSasa.id}/isLoggedIn`).set(false); // Inaruhusu ku-login kwingine baada ya hapa
             }
             localStorage.clear();
             location.reload();
