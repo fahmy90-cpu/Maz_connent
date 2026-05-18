@@ -672,10 +672,10 @@
     <div id="auth-screen" class="screen">
         <div class="auth-container">
             <h2>Welcome to Maz Connect</h2>
-            <p style="color: #667781; font-size: 14px; margin-bottom: 10px;">Register to start chatting securely with friends.</p>
-            <input type="text" id="reg-name" placeholder="Enter your real name...">
+            <p style="color: #667781; font-size: 14px; margin-bottom: 10px;">Register your username to start chatting.</p>
+            <input type="text" id="reg-name" placeholder="Enter username (e.g. fahm_bin_nazir)...">
             <input type="email" id="reg-email" placeholder="Enter your email address...">
-            <button class="auth-btn" onclick="mchakatoWaUsajili()">Launch Application</button>
+            <button class="auth-btn" id="reg-submit-btn" onclick="mchakatoWaUsajili()">Launch Application</button>
         </div>
     </div>
 
@@ -690,7 +690,7 @@
         <div class="search-wrapper">
             <div class="search-box">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#667781" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" id="search-input-field" placeholder="Search for user by real name...">
+                <input type="text" id="search-input-field" placeholder="Search by username...">
                 <div id="search-loading-spinner" class="search-spinner">
                     <svg class="spinner" viewBox="0 0 50 50">
                         <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
@@ -724,7 +724,7 @@
             </button>
             <img src="https://via.placeholder.com/150" id="chat-window-avatar" style="width:38px; height:38px; border-radius:50%;">
             <div>
-                <h4 id="chat-screen-title" style="font-size: 16px;">User Profile</h4>
+                <h4 id="chat-screen-title" style="font-size: 16px; display: flex; align-items: center;">User Profile</h4>
                 <span id="chat-screen-online-status" style="font-size: 11px; color: #d9fdd3; display: none;">online</span>
             </div>
         </div>
@@ -896,7 +896,6 @@
                         if (mtumiajiSasa && mtumiajiSasa.id) {
                             washaMfumoWaOnlineStatus(mtumiajiSasa.id);
                             pakiaTaarifaZaSettings();
-                            // Hapa sasa tunaita chat history list badala ya kuacha skrini tupu
                             vutaNaKuonyeshaChatHistory();
                             badiliScreen('home-screen');
                         } else {
@@ -992,7 +991,7 @@
         function lindaMabadilikoYaMtumiaji() {
             if (!mtumiajiSasa) return;
 
-            const jinaJipya = document.getElementById("user-settings-name").value.trim();
+            const jinaJipya = document.getElementById("user-settings-name").value.trim().toLowerCase().replace(/\s+/g, '_');
             const bioMpya = document.getElementById("user-settings-status").value.trim();
 
             if(!jinaJipya) return;
@@ -1030,12 +1029,20 @@
         }
 
         function mchakatoWaUsajili() {
-            const jina = document.getElementById("reg-name").value.trim();
+            const btn = document.getElementById("reg-submit-btn");
+            const jinaInput = document.getElementById("reg-name").value.trim().toLowerCase();
             const email = document.getElementById("reg-email").value.trim().toLowerCase();
+            
+            const nicknamePattern = /^[a-z0-9_]+$/;
             const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-            if (!jina || !email) {
+            if (!jinaInput || !email) {
                 alert("Please fill all details correctly!");
+                return;
+            }
+
+            if (!nicknamePattern.test(jinaInput)) {
+                alert("Nickname can only contain lowercase letters, numbers, and underscores (_). No spaces!");
                 return;
             }
 
@@ -1044,40 +1051,53 @@
                 return;
             }
 
-            const userId = email.replace(/@/g, "_at_").replace(/\./g, "_dot_");
-            
-            mtumiajiSasa = {
-                id: userId,
-                username: jina,
-                email: email,
-                avatar: "https://via.placeholder.com/150",
-                status: "Available on Maz Connect",
-                isOnline: true
-            };
+            btn.disabled = true;
+            btn.innerText = "Checking uniqueness...";
 
-            localStorage.setItem("maz_user", JSON.stringify(mtumiajiSasa));
+            db.ref("users").orderByChild("username").equalTo(jinaInput).once("value", (snapshot) => {
+                if (snapshot.exists()) {
+                    alert("This nickname/username is already taken. Try another one!");
+                    btn.disabled = false;
+                    btn.innerText = "Launch Application";
+                    return;
+                }
 
-            db.ref(`users/${userId}`).set(mtumiajiSasa).then(() => {
-                washaMfumoWaOnlineStatus(userId);
-                pakiaTaarifaZaSettings();
-                vutaNaKuonyeshaChatHistory();
-                badiliScreen('home-screen');
-            }).catch((error) => {
-                alert("Database execution error: " + error.message);
+                const userId = email.replace(/@/g, "_at_").replace(/\./g, "_dot_");
+                
+                mtumiajiSasa = {
+                    id: userId,
+                    username: jinaInput,
+                    email: email,
+                    avatar: "https://via.placeholder.com/150",
+                    status: "Available on Maz Connect",
+                    isOnline: true,
+                    is_verified: false
+                };
+
+                localStorage.setItem("maz_user", JSON.stringify(mtumiajiSasa));
+
+                db.ref(`users/${userId}`).set(mtumiajiSasa).then(() => {
+                    washaMfumoWaOnlineStatus(userId);
+                    pakiaTaarifaZaSettings();
+                    vutaNaKuonyeshaChatHistory();
+                    badiliScreen('home-screen');
+                }).catch((error) => {
+                    alert("Database error: " + error.message);
+                    btn.disabled = false;
+                    btn.innerText = "Launch Application";
+                });
             });
         }
 
-        // FEATURE MPYA: Inaleta list ya watu wote mliochat nao mbele (WhatsApp Style) automatically!
         function vutaNaKuonyeshaChatHistory() {
             if (!mtumiajiSasa) return;
             const listEneo = document.getElementById("chats-list-container");
 
             db.ref(`unread_counts/${mtumiajiSasa.id}`).on("value", (snapshot) => {
-                // Kama search imefunguliwa, isivuruge matokeo ya search
                 if (document.getElementById("search-input-field").value.trim() !== "") return;
 
                 if (!snapshot.exists()) {
-                    listEneo.innerHTML = `<div style="padding:40px 20px; text-align:center; color:#667781; font-size:14px;">No recent chats. Use the search bar above to look up friends and start a transmission!</div>`;
+                    listEneo.innerHTML = `<div style="padding:40px 20px; text-align:center; color:#667781; font-size:14px;">No recent chats. Search for usernames above to transmit messages!</div>`;
                     return;
                 }
 
@@ -1097,12 +1117,11 @@
         }
 
         document.getElementById("search-input-field").addEventListener("input", (e) => {
-            const txt = e.target.value.trim();
+            const txt = e.target.value.trim().toLowerCase();
             const listEneo = document.getElementById("chats-list-container");
             const spinnerElement = document.getElementById("search-loading-spinner");
 
             if (!txt) {
-                // Kama amefuta maandishi kwenye search bar, rudisha ile chat history ya mbele automatically
                 vutaNaKuonyeshaChatHistory();
                 if(spinnerElement) spinnerElement.style.display = "none";
                 return;
@@ -1112,53 +1131,54 @@
 
             db.ref("users").orderByChild("username").startAt(txt).endAt(txt + "\uf8ff").once("value", (snap) => {
                 listEneo.innerHTML = "";
-                
                 if(spinnerElement) spinnerElement.style.display = "none";
 
                 if (!snap.exists()) {
-                    listEneo.innerHTML = `
-                        <div class="not-found-wrapper">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#667781" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="8" x2="12" y2="12"></line>
-                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                            </svg>
-                            <span>User not found on the platform</span>
-                        </div>`;
+                    kuonyeshaUserNotFound(listEneo);
                     return;
                 }
-                let matokeoYapo = false;
+
+                let uniqueUsersMap = new Map();
                 snap.forEach((child) => {
                     const usr = child.val();
                     if (mtumiajiSasa && usr.id === mtumiajiSasa.id) return;
-                    matokeoYapo = true;
-                    vutaIdadiYaMesejiNaKuonyeshaRow(usr, listEneo);
+                    uniqueUsersMap.set(usr.id, usr);
                 });
 
-                if (!matokeoYapo) {
-                    listEneo.innerHTML = `
-                        <div class="not-found-wrapper">
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#667781" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="8" x2="12" y2="12"></line>
-                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                            </svg>
-                            <span>User not found on the platform</span>
-                        </div>`;
+                if (uniqueUsersMap.size === 0) {
+                    kuonyeshaUserNotFound(listEneo);
+                    return;
                 }
+
+                uniqueUsersMap.forEach((usr) => {
+                    vutaIdadiYaMesejiNaKuonyeshaRow(usr, listEneo);
+                });
             });
         });
+
+        function kuonyeshaUserNotFound(eneo) {
+            eneo.innerHTML = `
+                <div class="not-found-wrapper">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#667781" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span>User nickname not found on platform</span>
+                </div>`;
+        }
 
         function vutaIdadiYaMesejiNaKuonyeshaRow(mtumiaji, eneo) {
             if(!mtumiajiSasa) return;
             const chatId = tengenezaChatId(mtumiajiSasa.id, mtumiaji.id);
             
+            db.ref(`unread_counts/${mtumiajiSasa.id}/${chatId}`).off();
             db.ref(`unread_counts/${mtumiajiSasa.id}/${chatId}`).on("value", (snapshot) => {
                 const unreadCount = snapshot.val() || 0;
                 
                 db.ref(`chats/${chatId}/messages`).limitToLast(1).once("value", (msgSnap) => {
                     let mudaWamwisho = "";
-                    let mwishoMesejiText = mtumiaji.status || 'Available';
+                    let mwishoMesejiText = mtumiaji.status || 'Available on Maz Connect';
 
                     if (msgSnap.exists()) {
                         msgSnap.forEach(m => {
@@ -1167,25 +1187,22 @@
                                 const d = new Date(data.timestamp);
                                 mudaWamwisho = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                             }
-                            if (data.text) {
-                                mwishoMesejiText = data.text; // Inaonyesha meseji ya mwisho chini ya jina (kama WhatsApp)
-                            }
+                            if (data.text) mwishoMesejiText = data.text;
                         });
                     }
 
-                    // KUKAGUA NA KUONYESHA BLUE TICK KAMA IPO LIVE
                     const hasBlueTick = mtumiaji.is_verified === true || mtumiaji.is_verified === "true";
                     const blueTickHTML = hasBlueTick 
-                        ? `<i class="fa-solid fa-circle-check" style="color: #38bdf8; margin-left: 6px; font-size: 14px;"></i>` 
+                        ? `<i class="fa-solid fa-circle-check" style="color: #00bfa5; margin-left: 5px; font-size: 14px;"></i>` 
                         : '';
 
                     const rowHTML = `
                         <div class="user-chat-row" onclick="funguaSogaKamilifu('${mtumiaji.id}', '${mtumiaji.username}', '${mtumiaji.avatar}')">
-                            <img src="${mtumiaji.avatar}" class="row-avatar">
+                            <img src="${mtumiaji.avatar}" class="row-avatar" onclick="event.stopPropagation(); alert('Profile image zoomed for: ${mtumiaji.username}');">
                             <div class="row-body">
                                 <div class="row-top">
                                     <h4>${mtumiaji.username} ${blueTickHTML}</h4>
-                                    <span class="chat-time">${mudaWamwisho}</span>
+                                    <span class="chat-time" style="${unreadCount > 0 ? 'color:#00a38c; font-weight:bold;' : ''}">${mudaWamwisho}</span>
                                 </div>
                                 <p class="row-status">${mwishoMesejiText}</p>
                             </div>
@@ -1193,11 +1210,15 @@
                         </div>
                     `;
                     
-                    const mzeeUpo = document.getElementById(`row-${mtumiaji.id}`);
+                    const containerId = `row-wrapper-${mtumiaji.id}`;
+                    let mzeeUpo = document.getElementById(containerId);
                     if (mzeeUpo) {
-                        mzeeUpo.outerHTML = rowHTML;
+                        mzeeUpo.innerHTML = rowHTML;
                     } else {
-                        eneo.innerHTML += `<div id="row-${mtumiaji.id}">${rowHTML}</div>`;
+                        const newDiv = document.createElement("div");
+                        newDiv.id = containerId;
+                        newDiv.innerHTML = rowHTML;
+                        eneo.appendChild(newDiv);
                     }
                 });
             });
@@ -1225,47 +1246,71 @@
             db.ref(`chats/${chatYenyeActiveID}/messages/${messageId}`).set(ujumbeData);
             input.value = "";
 
-            // Inasave unread count na kutengeneza node kwenye unread_counts ili jina litokee mbele hata kama hawajawahi kusearchiana kabla
             db.ref(`users/${mlengwaId}/activeChat`).once("value", (snap) => {
                 if (snap.val() !== chatYenyeActiveID) {
                     db.ref(`unread_counts/${mlengwaId}/${chatYenyeActiveID}`).transaction((c) => (c || 0) + 1);
                 }
             });
             
-            // Hakikisha na kwako inajisajili kwenye unread history ili isipotee mbele
             db.ref(`unread_counts/${mtumiajiSasa.id}/${chatYenyeActiveID}`).transaction((c) => (c || 0));
         }
 
         function sikilizaMesejiZoteZisomekeLive(chatId) {
             if(!mtumiajiSasa) return;
-            db.ref(`chats/${chatId}/messages`).on("value", (snapshot) => {
-                const chatBox = document.getElementById("chat-messages-box");
-                chatBox.innerHTML = "";
+            const chatBox = document.getElementById("chat-messages-box");
+            
+            db.ref(`chats/${chatId}/messages`).off();
+            chatBox.innerHTML = "";
 
+            // USALAMA WA DOUBLE MESSAGES: Kutumia child_added badala ya value
+            db.ref(`chats/${chatId}/messages`).on("child_added", (childSnap) => {
+                const msg = childSnap.val();
+                
+                if (msg.senderId !== mtumiajiSasa.id && msg.status !== "read") {
+                    db.ref(`chats/${chatId}/messages/${msg.id}/status`).set("read");
+                }
+
+                let tickIcon = "✓"; 
+                if (msg.status === "delivered") tickIcon = "✓✓";
+                if (msg.status === "read") tickIcon = `<span style="color: #00a3ff;">✓✓</span>`;
+
+                let tStr = "";
+                if (msg.timestamp) {
+                    const d = new Date(msg.timestamp);
+                    tStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                }
+
+                const bubble = document.createElement("div");
+                bubble.className = msg.senderId === mtumiajiSasa.id ? `bubble type-${mtindoWaMesejiSasa} out` : `bubble type-${mtindoWaMesejiSasa} in`;
+                bubble.innerHTML = `
+                    <p>${msg.text}</p>
+                    <span class="bubble-meta" style="font-size:10px;">${tStr} &nbsp; ${msg.senderId === mtumiajiSasa.id ? tickIcon : ""}</span>
+                `;
+
+                wekaMfumoWaKufutaMeseji(bubble, msg.id, msg.senderId, chatId);
+                chatBox.appendChild(bubble);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+
+            // Kusikiliza mabadiliko ya kufuta meseji (Revoke) live bila kurefresh app
+            db.ref(`chats/${chatId}/messages`).on("child_removed", () => {
+                // Kama ujumbe umefutwa, tunafuta orodha na kuruhusu child_added isome zilizobaki kwa usalama
+                funguaSogaKamilifuTenaBilaKuvuruga(chatId);
+            });
+        }
+
+        function funguaSogaKamilifuTenaBilaKuvuruga(chatId) {
+            const chatBox = document.getElementById("chat-messages-box");
+            chatBox.innerHTML = "";
+            db.ref(`chats/${chatId}/messages`).once("value", (snapshot) => {
                 snapshot.forEach((childSnap) => {
                     const msg = childSnap.val();
+                    let tickIcon = msg.status === "read" ? `<span style="color: #00a3ff;">✓✓</span>` : (msg.status === "delivered" ? "✓✓" : "✓");
+                    let tStr = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "";
                     
-                    if (msg.senderId !== mtumiajiSasa.id && msg.status !== "read") {
-                        db.ref(`chats/${chatId}/messages/${msg.id}/status`).set("read");
-                    }
-
-                    let tickIcon = "✓"; 
-                    if (msg.status === "delivered") tickIcon = "✓✓";
-                    if (msg.status === "read") tickIcon = `<span style="color: #00a3ff;">✓✓</span>`;
-
-                    let tStr = "";
-                    if (msg.timestamp) {
-                        const d = new Date(msg.timestamp);
-                        tStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    }
-
                     const bubble = document.createElement("div");
                     bubble.className = msg.senderId === mtumiajiSasa.id ? `bubble type-${mtindoWaMesejiSasa} out` : `bubble type-${mtindoWaMesejiSasa} in`;
-                    bubble.innerHTML = `
-                        <p>${msg.text}</p>
-                        <span class="bubble-meta" style="font-size:10px;">${tStr} &nbsp; ${msg.senderId === mtumiajiSasa.id ? tickIcon : ""}</span>
-                    `;
-
+                    bubble.innerHTML = `<p>${msg.text}</p><span class="bubble-meta" style="font-size:10px;">${tStr} &nbsp; ${msg.senderId === mtumiajiSasa.id ? tickIcon : ""}</span>`;
                     wekaMfumoWaKufutaMeseji(bubble, msg.id, msg.senderId, chatId);
                     chatBox.appendChild(bubble);
                 });
@@ -1301,7 +1346,14 @@
             db.ref(`users/${mtumiajiSasa.id}/activeChat`).set(chatYenyeActiveID);
             db.ref(`unread_counts/${mtumiajiSasa.id}/${chatYenyeActiveID}`).set(0);
             
-            document.getElementById("chat-screen-title").innerText = jina;
+            db.ref(`users/${mlengwaId}`).once("value", (uSnap) => {
+                const targetData = uSnap.val();
+                const isVerified = targetData && (targetData.is_verified === true || targetData.is_verified === "true");
+                const tickHTML = isVerified ? `<i class="fa-solid fa-circle-check" style="color: #00bfa5; margin-left: 5px; font-size: 14px;"></i>` : '';
+                
+                document.getElementById("chat-screen-title").innerHTML = `${jina} ${tickHTML}`;
+            });
+
             document.getElementById("chat-window-avatar").src = avatar;
             
             db.ref(`users/${mlengwaId}/isOnline`).on("value", (onlineSnap) => {
@@ -1338,7 +1390,6 @@
                 db.ref(`users/${mtumiajiSasa.id}/activeChat`).remove();
                 db.ref(`chats/${chatYenyeActiveID}/messages`).off();
             }
-            // Ukirudi nyuma tunaload tena active chat history ili kila kitu kiwe up to date
             vutaNaKuonyeshaChatHistory();
             badiliScreen('home-screen');
         }
