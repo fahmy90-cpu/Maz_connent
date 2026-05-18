@@ -90,7 +90,7 @@
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); }
+            0 { transform: scale(1); }
             50% { transform: scale(1.08); }
             100% { transform: scale(1); }
         }
@@ -871,7 +871,6 @@
         let rangiMfumoSasa = localStorage.getItem("maz_theme") || "light";
 
         window.addEventListener('DOMContentLoaded', () => {
-            // ULINZI: Hakikisha wallpaperSasa ni string halali kabla ya kutumia .includes
             const messagesBox = document.getElementById("chat-messages-box");
             if (messagesBox) {
                 messagesBox.style.background = wallpaperSasa;
@@ -883,7 +882,6 @@
 
             badilishaRangiMfumo(rangiMfumoSasa);
 
-            // ULINZI MKUU WA SPLASH SCREEN: Kuzuia kukwama kwa namna yoyote
             setTimeout(() => {
                 try {
                     const zilizohifadhiwa = localStorage.getItem("maz_user");
@@ -901,7 +899,7 @@
                     }
                 } catch (e) {
                     console.error("Kosa kwenye ku-load user data:", e);
-                    badiliScreen('auth-screen'); // Ikitokea hitilafu isi-stuck, iende auth-screen
+                    badiliScreen('auth-screen');
                 }
             }, 2500);
 
@@ -1123,8 +1121,10 @@
                     let mudaWamwisho = "";
                     if (msgSnap.exists()) {
                         msgSnap.forEach(m => {
-                            const d = new Date(m.val().timestamp);
-                            mudaWamwisho = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            if (m.val().timestamp) {
+                                const d = new Date(m.val().timestamp);
+                                mudaWamwisho = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            }
                         });
                     }
 
@@ -1160,7 +1160,8 @@
             geuzaTypingStatus(false);
 
             const messageId = db.ref(`chats/${chatYenyeActiveID}/messages`).push().key;
-            const mlengwaId = chatYenyeActiveID.replace(mtumiajiSasa.id, "").replace("_", "");
+            const vipande = chatYenyeActiveID.split('_');
+            const mlengwaId = vippieces[0] === mtumiajiSasa.id ? vippieces[1] : vippieces[0];
 
             const ujumbeData = {
                 id: messageId,
@@ -1197,8 +1198,11 @@
                     if (msg.status === "delivered") tickIcon = "✓✓";
                     if (msg.status === "read") tickIcon = `<span style="color: #00a3ff;">✓✓</span>`;
 
-                    const d = new Date(msg.timestamp);
-                    const tStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    let tStr = "";
+                    if (msg.timestamp) {
+                        const d = new Date(msg.timestamp);
+                        tStr = d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    }
 
                     const bubble = document.createElement("div");
                     bubble.className = msg.senderId === mtumiajiSasa.id ? `bubble type-${mtindoWaMesejiSasa} out` : `bubble type-${mtindoWaMesejiSasa} in`;
@@ -1272,7 +1276,8 @@
         function rudiHome() {
             if (chatYenyeActiveID && mtumiajiSasa) {
                 geuzaTypingStatus(false);
-                const mlengwaId = chatYenyeActiveID.replace(mtumiajiSasa.id, "").replace("_", "");
+                const vipande = chatYenyeActiveID.split('_');
+                const mlengwaId = vippieces[0] === mtumiajiSasa.id ? vippieces[1] : vippieces[0];
                 db.ref(`chats/${chatYenyeActiveID}/typing/${mlengwaId}`).off();
                 
                 db.ref(`users/${mtumiajiSasa.id}/activeChat`).remove();
